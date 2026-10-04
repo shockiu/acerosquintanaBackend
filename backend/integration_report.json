@@ -1,0 +1,581 @@
+[
+  {
+    "endpoint": "POST /auth/login",
+    "status": 200,
+    "requestBody": {
+      "email": "admin@acerosquintana.com",
+      "password": "548528-Chester"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWMyOGNlM2RmNTc2YmEwZjllODMyNWQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3OTExMzU0OTgsImV4cCI6MTc5MTE2NDI5OH0.8Eb8UNC_w2oLfosPQt1NeOQasxAKlc57yuLloJty5yM",
+        "user": {
+          "id": "6ac28ce3df576ba0f9e8325d",
+          "name": "Administrador Principal",
+          "email": "admin@acerosquintana.com",
+          "role": "admin"
+        }
+      }
+    }
+  },
+  {
+    "endpoint": "POST /users",
+    "status": 201,
+    "requestBody": {
+      "email": "user1791135498504@acerosquintana.com",
+      "password": "user123",
+      "name": "Operario Test",
+      "role": "user"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "name": "Operario Test",
+        "email": "user1791135498504@acerosquintana.com",
+        "role": "user",
+        "isActive": true,
+        "_id": "6ac28f0a22ff71a56c34055c",
+        "createdAt": "2026-10-04T17:38:18.490Z",
+        "updatedAt": "2026-10-04T17:38:18.490Z",
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "POST /auth/login",
+    "status": 200,
+    "requestBody": {
+      "email": "user1791135498504@acerosquintana.com",
+      "password": "user123"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWMyOGYwYTIyZmY3MWE1NmMzNDA1NWMiLCJyb2xlIjoidXNlciIsImlhdCI6MTc5MTEzNTQ5OCwiZXhwIjoxNzkxMTY0Mjk4fQ.1gn93z7V0X-Jlh0fGDILIRdvLIrFJH3eGhUZdSVoUlk",
+        "user": {
+          "id": "6ac28f0a22ff71a56c34055c",
+          "name": "Operario Test",
+          "email": "user1791135498504@acerosquintana.com",
+          "role": "user"
+        }
+      }
+    }
+  },
+  {
+    "endpoint": "GET /catalog/units",
+    "status": 200,
+    "requestBody": null,
+    "response": {
+      "ok": true,
+      "data": [
+        {
+          "_id": "6ac28cd990bcab2f4151ffca",
+          "name": "Caja",
+          "__v": 0,
+          "allowsDecimals": false,
+          "createdAt": "2026-10-04T17:29:07.096Z",
+          "symbol": "caja",
+          "updatedAt": "2026-10-04T17:29:07.096Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc3",
+          "name": "Centímetro",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.583Z",
+          "symbol": "cm",
+          "updatedAt": "2026-10-04T17:29:06.583Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc5",
+          "name": "Gramo",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.736Z",
+          "symbol": "g",
+          "updatedAt": "2026-10-04T17:29:06.736Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc4",
+          "name": "Kilogramo",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.670Z",
+          "symbol": "kg",
+          "updatedAt": "2026-10-04T17:29:06.670Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc6",
+          "name": "Litro",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.800Z",
+          "symbol": "L",
+          "updatedAt": "2026-10-04T17:29:06.800Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc2",
+          "name": "Metro",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.126Z",
+          "symbol": "m",
+          "updatedAt": "2026-10-04T17:29:06.126Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc9",
+          "name": "Par",
+          "__v": 0,
+          "allowsDecimals": false,
+          "createdAt": "2026-10-04T17:29:07.031Z",
+          "symbol": "par",
+          "updatedAt": "2026-10-04T17:29:07.031Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc8",
+          "name": "Pieza",
+          "__v": 0,
+          "allowsDecimals": false,
+          "createdAt": "2026-10-04T17:29:06.964Z",
+          "symbol": "pz",
+          "updatedAt": "2026-10-04T17:29:06.964Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffcb",
+          "name": "Rollo",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:07.166Z",
+          "symbol": "rollo",
+          "updatedAt": "2026-10-04T17:29:07.166Z"
+        },
+        {
+          "_id": "6ac28cd990bcab2f4151ffc7",
+          "name": "Unidad",
+          "__v": 0,
+          "allowsDecimals": false,
+          "createdAt": "2026-10-04T17:29:06.864Z",
+          "symbol": "u",
+          "updatedAt": "2026-10-04T17:29:06.864Z"
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "POST /catalog/categories",
+    "status": 201,
+    "requestBody": {
+      "name": "Tubos 1791135498504",
+      "description": "Tubos"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "name": "Tubos 1791135498504",
+        "description": "Tubos",
+        "isActive": true,
+        "_id": "6ac28f0b22ff71a56c34055d",
+        "createdAt": "2026-10-04T17:38:19.148Z",
+        "updatedAt": "2026-10-04T17:38:19.148Z",
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "POST /catalog/subcategories",
+    "status": 201,
+    "requestBody": {
+      "category": "6ac28f0b22ff71a56c34055d",
+      "name": "Tubo Redondo 1791135498504",
+      "unit": "6ac28cd990bcab2f4151ffc2"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "category": {
+          "_id": "6ac28f0b22ff71a56c34055d",
+          "name": "Tubos 1791135498504",
+          "description": "Tubos",
+          "isActive": true,
+          "createdAt": "2026-10-04T17:38:19.148Z",
+          "updatedAt": "2026-10-04T17:38:19.148Z",
+          "__v": 0
+        },
+        "name": "Tubo Redondo 1791135498504",
+        "unit": {
+          "_id": "6ac28cd990bcab2f4151ffc2",
+          "name": "Metro",
+          "__v": 0,
+          "allowsDecimals": true,
+          "createdAt": "2026-10-04T17:29:06.126Z",
+          "symbol": "m",
+          "updatedAt": "2026-10-04T17:29:06.126Z"
+        },
+        "isActive": true,
+        "_id": "6ac28f0b22ff71a56c34055e",
+        "createdAt": "2026-10-04T17:38:19.351Z",
+        "updatedAt": "2026-10-04T17:38:19.351Z",
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "POST /inventory/items",
+    "status": 202,
+    "requestBody": {
+      "subcategory": "6ac28f0b22ff71a56c34055e",
+      "name": "Tubo 2 pulgadas 1791135498504",
+      "kind": "material"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "subcategory": "6ac28f0b22ff71a56c34055e",
+        "name": "Tubo 2 pulgadas 1791135498504",
+        "description": "",
+        "kind": "material",
+        "stock": {
+          "$numberDecimal": "0"
+        },
+        "avgUnitCost": {
+          "$numberDecimal": "0"
+        },
+        "isActive": true,
+        "_id": "6ac28f0b22ff71a56c34055f",
+        "createdAt": "2026-10-04T17:38:19.579Z",
+        "updatedAt": "2026-10-04T17:38:19.579Z",
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "POST /inventory/items/6ac28f0b22ff71a56c34055f/purchases",
+    "status": 202,
+    "requestBody": {
+      "quantity": 100,
+      "note": "Llegaron 100 tubos"
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "entity": "inventoryMovement",
+        "action": "purchase",
+        "targetId": "6ac28f0b22ff71a56c34055f",
+        "payload": {
+          "quantity": 100,
+          "note": "Llegaron 100 tubos"
+        },
+        "status": "pending",
+        "requestedBy": "6ac28f0a22ff71a56c34055c",
+        "_id": "6ac28f0b22ff71a56c340561",
+        "createdAt": "2026-10-04T17:38:19.843Z",
+        "updatedAt": "2026-10-04T17:38:19.843Z",
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "GET /requests",
+    "status": 200,
+    "requestBody": null,
+    "response": {
+      "ok": true,
+      "data": [
+        {
+          "_id": "6ac28f0b22ff71a56c340561",
+          "entity": "inventoryMovement",
+          "action": "purchase",
+          "targetId": "6ac28f0b22ff71a56c34055f",
+          "payload": {
+            "quantity": 100,
+            "note": "Llegaron 100 tubos"
+          },
+          "status": "pending",
+          "requestedBy": {
+            "_id": "6ac28f0a22ff71a56c34055c",
+            "name": "Operario Test",
+            "email": "user1791135498504@acerosquintana.com"
+          },
+          "createdAt": "2026-10-04T17:38:19.843Z",
+          "updatedAt": "2026-10-04T17:38:19.843Z",
+          "__v": 0
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "POST /requests/6ac28f0b22ff71a56c340561/approve",
+    "status": 200,
+    "requestBody": {
+      "overrides": {
+        "totalCost": 5000
+      }
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "_id": "6ac28f0b22ff71a56c340561",
+        "entity": "inventoryMovement",
+        "action": "purchase",
+        "targetId": "6ac28f0b22ff71a56c34055f",
+        "payload": {
+          "quantity": 100,
+          "note": "Llegaron 100 tubos"
+        },
+        "status": "approved",
+        "requestedBy": "6ac28f0a22ff71a56c34055c",
+        "createdAt": "2026-10-04T17:38:19.843Z",
+        "updatedAt": "2026-10-04T17:38:20.174Z",
+        "__v": 0,
+        "reviewedAt": "2026-10-04T17:38:20.173Z",
+        "reviewedBy": "6ac28ce3df576ba0f9e8325d"
+      }
+    }
+  },
+  {
+    "endpoint": "POST /works",
+    "status": 202,
+    "requestBody": {
+      "clientName": "Juan Perez",
+      "description": "Techo de cochera",
+      "performedAt": "2026-10-04T17:38:20.606Z",
+      "items": [
+        {
+          "item": "6ac28f0b22ff71a56c34055f",
+          "quantity": 10
+        }
+      ]
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "clientName": "Juan Perez",
+        "description": "Techo de cochera",
+        "performedAt": {},
+        "status": "pending_approval",
+        "createdBy": {
+          "i0": 6996623,
+          "i1": 664319,
+          "i2": 7447916,
+          "i3": 3409244
+        },
+        "_id": {
+          "i0": 6996623,
+          "i1": 795391,
+          "i2": 7447916,
+          "i3": 3409253
+        },
+        "items": [],
+        "createdAt": {},
+        "updatedAt": {},
+        "__v": 0
+      }
+    }
+  },
+  {
+    "endpoint": "GET /requests",
+    "status": 200,
+    "requestBody": null,
+    "response": {
+      "ok": true,
+      "data": [
+        {
+          "_id": "6ac28f0c22ff71a56c340564",
+          "entity": "work",
+          "action": "create",
+          "payload": {
+            "clientName": "Juan Perez",
+            "description": "Techo de cochera",
+            "performedAt": "2026-10-04T17:38:20.606Z",
+            "items": [
+              {
+                "item": "6ac28f0b22ff71a56c34055f",
+                "quantity": 10
+              }
+            ]
+          },
+          "status": "pending",
+          "requestedBy": {
+            "_id": "6ac28f0a22ff71a56c34055c",
+            "name": "Operario Test",
+            "email": "user1791135498504@acerosquintana.com"
+          },
+          "createdAt": "2026-10-04T17:38:20.677Z",
+          "updatedAt": "2026-10-04T17:38:20.813Z",
+          "__v": 0,
+          "targetId": "6ac28f0c22ff71a56c340565"
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "POST /requests/6ac28f0c22ff71a56c340564/approve",
+    "status": 200,
+    "requestBody": {
+      "overrides": {
+        "chargedPrice": 1200
+      }
+    },
+    "response": {
+      "ok": true,
+      "data": {
+        "_id": "6ac28f0c22ff71a56c340564",
+        "entity": "work",
+        "action": "create",
+        "payload": {
+          "clientName": "Juan Perez",
+          "description": "Techo de cochera",
+          "performedAt": "2026-10-04T17:38:20.606Z",
+          "items": [
+            {
+              "item": "6ac28f0b22ff71a56c34055f",
+              "quantity": 10
+            }
+          ]
+        },
+        "status": "approved",
+        "requestedBy": "6ac28f0a22ff71a56c34055c",
+        "createdAt": "2026-10-04T17:38:20.677Z",
+        "updatedAt": "2026-10-04T17:38:21.130Z",
+        "__v": 0,
+        "targetId": "6ac28f0c22ff71a56c340565",
+        "reviewedAt": "2026-10-04T17:38:21.130Z",
+        "reviewedBy": "6ac28ce3df576ba0f9e8325d"
+      }
+    }
+  },
+  {
+    "endpoint": "GET /inventory/items",
+    "status": 200,
+    "requestBody": null,
+    "response": {
+      "ok": true,
+      "data": [
+        {
+          "_id": {
+            "i0": 6996622,
+            "i1": 13573482,
+            "i2": 4510750,
+            "i3": 4684471
+          },
+          "subcategory": {
+            "_id": {
+              "i0": 6996622,
+              "i1": 13573482,
+              "i2": 4510750,
+              "i3": 4684470
+            },
+            "category": {
+              "i0": 6996622,
+              "i1": 13573482,
+              "i2": 4510750,
+              "i3": 4684469
+            },
+            "name": "Tubo Redondo",
+            "unit": {
+              "i0": 6996620,
+              "i1": 14258364,
+              "i2": 11218753,
+              "i3": 5373890
+            },
+            "isActive": true,
+            "createdAt": {},
+            "updatedAt": {},
+            "__v": 0
+          },
+          "name": "Tubo 2 pulgadas",
+          "description": "",
+          "kind": "material",
+          "stock": "0",
+          "isActive": true,
+          "createdAt": {},
+          "updatedAt": {},
+          "__v": 0
+        },
+        {
+          "_id": {
+            "i0": 6996622,
+            "i1": 15828326,
+            "i2": 8456437,
+            "i3": 12355019
+          },
+          "subcategory": {
+            "_id": {
+              "i0": 6996622,
+              "i1": 15828326,
+              "i2": 8456437,
+              "i3": 12355018
+            },
+            "category": {
+              "i0": 6996622,
+              "i1": 15828326,
+              "i2": 8456437,
+              "i3": 12355017
+            },
+            "name": "Tubo Redondo 1791135471718",
+            "unit": {
+              "i0": 6996620,
+              "i1": 14258364,
+              "i2": 11218753,
+              "i3": 5373890
+            },
+            "isActive": true,
+            "createdAt": {},
+            "updatedAt": {},
+            "__v": 0
+          },
+          "name": "Tubo 2 pulgadas 1791135471718",
+          "description": "",
+          "kind": "material",
+          "stock": "0",
+          "isActive": true,
+          "createdAt": {},
+          "updatedAt": {},
+          "__v": 0
+        },
+        {
+          "_id": {
+            "i0": 6996623,
+            "i1": 729855,
+            "i2": 7447916,
+            "i3": 3409247
+          },
+          "subcategory": {
+            "_id": {
+              "i0": 6996623,
+              "i1": 729855,
+              "i2": 7447916,
+              "i3": 3409246
+            },
+            "category": {
+              "i0": 6996623,
+              "i1": 729855,
+              "i2": 7447916,
+              "i3": 3409245
+            },
+            "name": "Tubo Redondo 1791135498504",
+            "unit": {
+              "i0": 6996620,
+              "i1": 14258364,
+              "i2": 11218753,
+              "i3": 5373890
+            },
+            "isActive": true,
+            "createdAt": {},
+            "updatedAt": {},
+            "__v": 0
+          },
+          "name": "Tubo 2 pulgadas 1791135498504",
+          "description": "",
+          "kind": "material",
+          "stock": "90",
+          "isActive": true,
+          "createdAt": {},
+          "updatedAt": {},
+          "__v": 0
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Superficies y texto */
+    --background: 210 20% 98%;
+    --foreground: 215 28% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    /* Marca */
+    --primary: 211 60% 28%;            /* Azul Acero */
+    --primary-foreground: 210 40% 98%;
+    --brand: 24 85% 52%;               /* Naranja Forja */
+    --brand-foreground: 0 0% 100%;
+
+    /* Neutros */
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 215 28% 17%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 211 50% 94%;
+    --accent-foreground: 211 60% 28%;
+
+    /* Estados */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83% 14%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Bordes / foco */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 211 60% 28%;
+    --shadow-color: 215 40% 20%;
+
+    /* Gráficas */
+    --chart-1: 211 60% 28%;
+    --chart-2: 24 85% 52%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 215 16% 47%;
+
+    /* Sidebar (oscuro también en modo claro) */
+    --sidebar-background: 213 45% 14%;
+    --sidebar-foreground: 214 32% 91%;
+    --sidebar-muted: 215 20% 65%;
+    --sidebar-primary: 24 85% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 40% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 213 35% 22%;
+    --sidebar-ring: 24 85% 52%;
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 215 35% 9%;
+    --foreground: 210 40% 98%;
+    --card: 215 32% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 215 32% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 211 75% 62%;
+    --primary-foreground: 215 35% 9%;
+    --brand: 24 90% 58%;
+    --brand-foreground: 0 0% 100%;
+
+    --secondary: 215 25% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 25% 20%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 215 25% 20%;
+    --accent-foreground: 210 40% 98%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 215 35% 9%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 26 83% 14%;
+    --info: 199 89% 60%;
+    --info-foreground: 215 35% 9%;
+    --destructive: 0 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 211 75% 62%;
+    --shadow-color: 220 60% 2%;
+
+    --chart-1: 211 75% 62%;
+    --chart-2: 24 90% 58%;
+    --chart-3: 199 89% 60%;
+    --chart-4: 142 60% 45%;
+    --chart-5: 215 20% 65%;
+
+    --sidebar-background: 216 40% 7%;
+    --sidebar-foreground: 214 32% 91%;
+    --sidebar-muted: 215 20% 60%;
+    --sidebar-primary: 24 90% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 30% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 30% 16%;
+    --sidebar-ring: 24 90% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+  }
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
+  }
+}
+
+@layer utilities {
+  /* Scrollbar discreta para sidebar y tablas */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+}
