@@ -34,7 +34,7 @@ export function useExportWorks() {
         responseType: 'blob', // Importante para manejar archivos binarios
       });
       
-      const url = window.URL.createObjectURL(new Blob([response as BlobPart]));
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `obras_reporte_${new Date().getTime()}.xlsx`);
