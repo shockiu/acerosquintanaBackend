@@ -12,6 +12,10 @@ import { inventoryRoutes } from './modules/inventory/infrastructure/http/invento
 import { approvalRoutes } from './modules/approvals/infrastructure/http/approvalRoutes';
 import { workRoutes } from './modules/works/infrastructure/http/workRoutes';
 import { exportRoutes } from './modules/exports/infrastructure/http/exportRoutes';
+import { registerChangeHandlers } from './config/handlers';
+
+// Initialize change handlers
+registerChangeHandlers();
 
 const app = express();
 

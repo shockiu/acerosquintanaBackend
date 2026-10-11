@@ -32,6 +32,7 @@ export class WorkUseCases {
         description: data.description,
         performedAt: new Date(data.performedAt),
         status: 'pending_approval',
+        items: data.items || [],
         createdBy: ctx.actorId,
       });
 
@@ -57,6 +58,42 @@ export class WorkUseCases {
           ip: ctx.ip,
         }, tx);
         
+        return result;
+      });
+    }
+  }
+
+  static async reverseWork(id: string, ctx: ActionContext) {
+    if (ctx.role === 'user') {
+      return ApprovalUseCases.submitRequest({
+        entity: 'work',
+        action: 'delete',
+        targetId: id,
+        payload: {},
+      }, ctx);
+    } else {
+      const requestData = {
+        entity: 'work',
+        action: 'delete',
+        targetId: id,
+        payload: {},
+        status: 'approved',
+        requestedBy: ctx.actorId,
+        reviewedBy: ctx.actorId,
+        reviewedAt: new Date(),
+      };
+      return uow.runInTransaction(async (tx) => {
+        const handler = changeHandlerRegistry.get('work', 'delete');
+        const result = await handler.apply(requestData as any, {}, ctx, tx);
+        const { auditLogger } = await import('../../../audit/infrastructure/persistence/AuditLogger');
+        await auditLogger.log({
+          actor: ctx.actorId,
+          action: `work.delete.direct`,
+          entity: 'work',
+          entityId: id,
+          after: result,
+          ip: ctx.ip,
+        }, tx);
         return result;
       });
     }

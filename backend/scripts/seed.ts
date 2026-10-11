@@ -21,11 +21,12 @@ const defaultUnits = [
   { name: 'Kilogramo', symbol: 'kg', allowsDecimals: true },
   { name: 'Gramo', symbol: 'g', allowsDecimals: true },
   { name: 'Litro', symbol: 'L', allowsDecimals: true },
+  { name: 'Milímetro', symbol: 'mm', allowsDecimals: true },
   { name: 'Unidad', symbol: 'u', allowsDecimals: false },
   { name: 'Pieza', symbol: 'pz', allowsDecimals: false },
   { name: 'Par', symbol: 'par', allowsDecimals: false },
   { name: 'Caja', symbol: 'caja', allowsDecimals: false },
-  { name: 'Rollo', symbol: 'rollo', allowsDecimals: true },
+  { name: 'Rollo', symbol: 'rollo', allowsDecimals: false },
 ];
 
 async function seed() {
@@ -37,7 +38,7 @@ async function seed() {
     for (const unit of defaultUnits) {
       await Unit.updateOne(
         { name: unit.name },
-        { $setOnInsert: unit },
+        { $set: unit },
         { upsert: true }
       );
     }

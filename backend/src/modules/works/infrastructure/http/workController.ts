@@ -34,7 +34,20 @@ export class WorkController {
       const serialized = RoleSerializer.serialize(work, req.user.role);
       res.status(202).json(success(serialized)); // 202 Accepted
     } catch (error: any) {
-      if (error.message.includes('Insufficient stock')) {
+      if (error.message.includes('Insufficient stock') || error.message.includes('Stock insuficiente')) {
+        return res.status(400).json(fail(error.message));
+      }
+      next(error);
+    }
+  }
+
+  static async reverseWork(req: Request, res: Response, next: NextFunction) {
+    try {
+      const ctx: ActionContext = { actorId: req.user._id, role: req.user.role, ip: req.ip };
+      const result = await WorkUseCases.reverseWork(req.params.id as string, ctx);
+      res.status(202).json(success(result));
+    } catch (error: any) {
+      if (error.message.includes('Reversión bloqueada') || error.message.includes('Solo se pueden revertir')) {
         return res.status(400).json(fail(error.message));
       }
       next(error);

@@ -6,7 +6,9 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get('/inventory', ExportController.exportInventory);
 router.get('/inventory.xlsx', ExportController.exportInventory);
+router.get('/works', ExportController.exportWorks);
 router.get('/works.xlsx', ExportController.exportWorks);
 
 export { router as exportRoutes };

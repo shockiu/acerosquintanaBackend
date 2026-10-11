@@ -8,6 +8,11 @@ export class RoleSerializer {
     'profit',
     'unitCostSnapshot',
     'subtotal',
+    'costPerMeasureSnapshot',
+    'costPerMeasure',
+    'wasteCost',
+    'cost',
+    'inventoryValue',
   ];
 
   static serialize(data: any, role: 'admin' | 'user'): any {

@@ -10,7 +10,9 @@ export class MongoUnitOfWork implements IUnitOfWork {
       await session.commitTransaction();
       return result;
     } catch (error) {
-      await session.abortTransaction();
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
       throw error;
     } finally {
       session.endSession();

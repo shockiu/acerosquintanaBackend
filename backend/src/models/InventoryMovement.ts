@@ -2,11 +2,20 @@ import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IInventoryMovement extends Document {
   item: Types.ObjectId;
-  type: 'purchase' | 'adjustment' | 'work_consumption' | 'work_reversal';
+  type:
+    | 'purchase'
+    | 'adjustment'
+    | 'work_consumption'
+    | 'work_reversal'
+    | 'cut'
+    | 'remnant_consumption'
+    | 'waste';
   quantity: Types.Decimal128;
   unitCost?: Types.Decimal128;
   totalCost?: Types.Decimal128;
   work?: Types.ObjectId;
+  measureUsed?: Types.Decimal128;
+  remnant?: Types.ObjectId;
   createdBy: Types.ObjectId;
   approvedBy?: Types.ObjectId;
   note: string;
@@ -19,13 +28,23 @@ const inventoryMovementSchema = new Schema<IInventoryMovement>(
     item: { type: Schema.Types.ObjectId, ref: 'InventoryItem', required: true },
     type: {
       type: String,
-      enum: ['purchase', 'adjustment', 'work_consumption', 'work_reversal'],
+      enum: [
+        'purchase',
+        'adjustment',
+        'work_consumption',
+        'work_reversal',
+        'cut',
+        'remnant_consumption',
+        'waste',
+      ],
       required: true,
     },
     quantity: { type: Schema.Types.Decimal128, required: true },
     unitCost: { type: Schema.Types.Decimal128 },
     totalCost: { type: Schema.Types.Decimal128 },
     work: { type: Schema.Types.ObjectId, ref: 'Work' },
+    measureUsed: { type: Schema.Types.Decimal128 },
+    remnant: { type: Schema.Types.ObjectId, ref: 'Remnant' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     note: { type: String, default: '' },

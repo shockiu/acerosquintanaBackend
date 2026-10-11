@@ -1,8 +1,8 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IChangeRequest extends Document {
-  entity: 'inventoryItem' | 'inventoryMovement' | 'work';
-  action: 'create' | 'update' | 'delete' | 'purchase';
+  entity: 'inventoryItem' | 'inventoryMovement' | 'work' | 'remnant';
+  action: 'create' | 'update' | 'delete' | 'purchase' | 'discard';
   targetId?: Types.ObjectId;
   payload: any;
   status: 'pending' | 'approved' | 'rejected';
@@ -18,12 +18,12 @@ const changeRequestSchema = new Schema<IChangeRequest>(
   {
     entity: {
       type: String,
-      enum: ['inventoryItem', 'inventoryMovement', 'work'],
+      enum: ['inventoryItem', 'inventoryMovement', 'work', 'remnant'],
       required: true,
     },
     action: {
       type: String,
-      enum: ['create', 'update', 'delete', 'purchase'],
+      enum: ['create', 'update', 'delete', 'purchase', 'discard'],
       required: true,
     },
     targetId: { type: Schema.Types.ObjectId }, // Nullable for create
