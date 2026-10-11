@@ -9,6 +9,8 @@ import { usePendingRequests } from './hooks/useApprovalsData';
 import type { ChangeRequest } from './schemas/approvals.schema';
 import ApprovePurchaseDialog from './components/ApprovePurchaseDialog';
 import ApproveWorkDialog from './components/ApproveWorkDialog';
+import ApproveReversalDialog from './components/ApproveReversalDialog';
+import ApproveRemnantDiscardDialog from './components/ApproveRemnantDiscardDialog';
 import RejectDialog from './components/RejectDialog';
 
 export default function ApprovalsPage() {
@@ -16,19 +18,34 @@ export default function ApprovalsPage() {
   
   const [purchaseTarget, setPurchaseTarget] = useState<ChangeRequest | null>(null);
   const [workTarget, setWorkTarget] = useState<ChangeRequest | null>(null);
+  const [reversalTarget, setReversalTarget] = useState<ChangeRequest | null>(null);
+  const [remnantDiscardTarget, setRemnantDiscardTarget] = useState<ChangeRequest | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ChangeRequest | null>(null);
 
   const handleApprove = (req: ChangeRequest) => {
-    if (req.action === 'purchase') setPurchaseTarget(req);
-    else if (req.entity === 'work') setWorkTarget(req);
+    if (req.action === 'purchase') {
+      setPurchaseTarget(req);
+    } else if (req.entity === 'work' && req.action === 'delete') {
+      setReversalTarget(req);
+    } else if (req.entity === 'work') {
+      setWorkTarget(req);
+    } else if (req.entity === 'remnant' && req.action === 'discard') {
+      setRemnantDiscardTarget(req);
+    }
   };
 
   const getRequestDescription = (req: ChangeRequest) => {
     if (req.action === 'purchase') {
-      return `Llegada de Material: ${req.payload.quantity} unidades`;
+      return `Llegada de Material: ${req.payload?.quantity ?? 0} unidades`;
+    }
+    if (req.entity === 'work' && req.action === 'delete') {
+      return `Reversión de Obra ID: ${req.targetId || '-'}`;
     }
     if (req.entity === 'work') {
-      return `Obra nueva: ${req.payload.clientName} - ${req.payload.description}`;
+      return `Obra nueva: ${req.payload?.clientName || 'Sin cliente'} - ${req.payload?.description || ''}`;
+    }
+    if (req.entity === 'remnant' && req.action === 'discard') {
+      return `Descarte de Retazo ID: ${req.targetId || '-'}${req.payload?.note ? ` (${req.payload.note})` : ''}`;
     }
     return `Operación genérica: ${req.action} ${req.entity}`;
   };
@@ -73,8 +90,24 @@ export default function ApprovalsPage() {
                         {r.requestedBy?.name || r.requestedBy?.email?.split('@')[0] || '-'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="warning">
-                          {r.action === 'purchase' ? 'Compra' : r.entity === 'work' ? 'Obra' : 'Otro'}
+                        <Badge
+                          variant={
+                            r.action === 'delete'
+                              ? 'destructive'
+                              : r.entity === 'remnant'
+                              ? 'secondary'
+                              : 'warning'
+                          }
+                        >
+                          {r.action === 'purchase'
+                            ? 'Compra'
+                            : r.entity === 'work' && r.action === 'delete'
+                            ? 'Reversión'
+                            : r.entity === 'work'
+                            ? 'Obra'
+                            : r.entity === 'remnant' && r.action === 'discard'
+                            ? 'Descarte Retazo'
+                            : 'Otro'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">{getRequestDescription(r)}</TableCell>
@@ -100,6 +133,12 @@ export default function ApprovalsPage() {
       )}
       {workTarget && (
         <ApproveWorkDialog open={!!workTarget} onOpenChange={(v) => !v && setWorkTarget(null)} request={workTarget} />
+      )}
+      {reversalTarget && (
+        <ApproveReversalDialog open={!!reversalTarget} onOpenChange={(v) => !v && setReversalTarget(null)} request={reversalTarget} />
+      )}
+      {remnantDiscardTarget && (
+        <ApproveRemnantDiscardDialog open={!!remnantDiscardTarget} onOpenChange={(v) => !v && setRemnantDiscardTarget(null)} request={remnantDiscardTarget} />
       )}
       {rejectTarget && (
         <RejectDialog open={!!rejectTarget} onOpenChange={(v) => !v && setRejectTarget(null)} request={rejectTarget} />

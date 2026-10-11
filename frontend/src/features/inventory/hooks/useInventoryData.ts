@@ -32,6 +32,28 @@ export function useUnits() {
   });
 }
 
+export function useItemRemnants(itemId?: string, status?: string) {
+  return useQuery({
+    queryKey: ['remnants', itemId, status],
+    queryFn: () => (itemId ? inventoryApi.getItemRemnants(itemId, status) : Promise.resolve([])),
+    enabled: !!itemId,
+  });
+}
+
+export function useDiscardRemnant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ remnantId, note }: { remnantId: string; note?: string }) =>
+      inventoryApi.discardRemnant(remnantId, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['remnants'] });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.items() });
+      toast.success('Retazo descartado o enviado a aprobación');
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Error al descartar retazo')),
+  });
+}
+
 export function useCreateItem() {
   const queryClient = useQueryClient();
   return useMutation({

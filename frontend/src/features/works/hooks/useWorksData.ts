@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { worksApi } from '../services/worksApi';
 import { worksKeys } from '../works.keys';
 import { inventoryKeys } from '@/features/inventory/inventory.keys';
+import { approvalKeys } from '@/features/approvals/approvals.keys';
 import apiClient from '@/api/axiosClient';
 
 export function useWorks() {
@@ -20,9 +21,24 @@ export function useCreateWork() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: worksKeys.list() });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.items() });
+      queryClient.invalidateQueries({ queryKey: approvalKeys.all });
       toast.success('Obra registrada y enviada a aprobación');
     },
     onError: (error) => toast.error(getErrorMessage(error, 'Error al registrar obra')),
+  });
+}
+
+export function useReverseWork() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (workId: string) => worksApi.reverseWork(workId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: worksKeys.list() });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.items() });
+      queryClient.invalidateQueries({ queryKey: approvalKeys.all });
+      toast.success('Obra revertida exitosamente');
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Error al revertir obra')),
   });
 }
 

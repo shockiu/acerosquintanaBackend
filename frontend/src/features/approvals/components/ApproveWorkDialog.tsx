@@ -21,14 +21,35 @@ export default function ApproveWorkDialog({ open, onOpenChange, request }: { ope
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Aprobar Obra / Trabajo</DialogTitle>
           <DialogDescription>
-            Obra para el cliente <strong>{payload.clientName}</strong>. 
-            Se reportó consumo de materiales. Asigna el monto que se le cobró al cliente para calcular las ganancias.
+            Obra para el cliente <strong>{payload.clientName}</strong>.
+            Se procesará el consumo de materiales, deducción de stock y generación de retazos / mermas.
           </DialogDescription>
         </DialogHeader>
+
+        {payload.items && payload.items.length > 0 && (
+          <div className="space-y-1.5 p-3 bg-muted/40 rounded-md border text-xs">
+            <span className="font-semibold text-muted-foreground block mb-1">Detalle de consumo solicitado:</span>
+            {payload.items.map((it: any, idx: number) => (
+              <div key={idx} className="flex justify-between items-center py-1 border-b last:border-0">
+                <span className="truncate max-w-[200px]">{it.item?.name || `Material #${idx + 1}`}</span>
+                <span className="font-medium text-primary">
+                  {it.mode === 'pieces'
+                    ? `${it.quantity} pieza(s) enteras`
+                    : it.mode === 'measure'
+                    ? `${it.measureUsed} (desde ${it.source === 'whole_piece' ? 'pieza nueva' : 'retazo'})`
+                    : it.mode === 'waste'
+                    ? 'Descarte de retazo'
+                    : `${it.quantity} unid.`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Precio Cobrado al Cliente $</Label>
@@ -45,7 +66,7 @@ export default function ApproveWorkDialog({ open, onOpenChange, request }: { ope
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancelar</Button>
-            <Button type="submit" variant="success" disabled={isPending}>{isPending ? 'Procesando...' : 'Aprobar Obra'}</Button>
+            <Button type="submit" variant="brand" disabled={isPending}>{isPending ? 'Procesando...' : 'Aprobar Obra'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const changeRequestSchema = z.object({
   _id: z.string(),
-  entity: z.enum(['inventoryItem', 'inventoryMovement', 'work']),
-  action: z.enum(['create', 'update', 'delete', 'purchase']),
+  entity: z.enum(['inventoryItem', 'inventoryMovement', 'work', 'remnant']),
+  action: z.enum(['create', 'update', 'delete', 'purchase', 'discard']),
   targetId: z.string().optional().nullable(),
   payload: z.any(),
   status: z.enum(['pending', 'approved', 'rejected']),

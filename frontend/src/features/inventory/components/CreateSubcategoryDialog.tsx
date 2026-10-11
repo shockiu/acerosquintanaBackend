@@ -13,10 +13,11 @@ export default function CreateSubcategoryDialog({ open, onOpenChange }: { open: 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [unit, setUnit] = useState('');
+  const [kind, setKind] = useState<'material' | 'tool'>('material');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    create({ name, category, unit }, {
+    create({ name, category, unit, kind }, {
       onSuccess: () => onOpenChange(false)
     });
   };
@@ -26,9 +27,25 @@ export default function CreateSubcategoryDialog({ open, onOpenChange }: { open: 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nueva Subcategoría</DialogTitle>
-          <DialogDescription>Crea un grupo de ítems que compartan la misma unidad de medida y categoría.</DialogDescription>
+          <DialogDescription>Crea un grupo de ítems que compartan la misma unidad de medida, categoría y tipo.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Tipo de Elementos</Label>
+            <select
+              required
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={kind}
+              onChange={e => setKind(e.target.value as 'material' | 'tool')}
+            >
+              <option value="material">Material Consumible (para obras y proyectos)</option>
+              <option value="tool">Herramienta de Trabajo (equipos y utensilios)</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Los ítems creados en esta subcategoría heredarán automáticamente esta clasificación.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label>Categoría Padre</Label>
             <select 
