@@ -73,6 +73,15 @@ describe('WorkUseCases', () => {
     const list = await WorkUseCases.listWorks();
     expect(list).toHaveLength(1);
 
+    const paginated: any = await WorkUseCases.listWorks({}, 1, 10);
+    expect(paginated.works).toHaveLength(1);
+    expect(paginated.pagination).toEqual({
+      page: 1,
+      limit: 10,
+      total: 1,
+      pages: 1,
+    });
+
     const fetched = await WorkUseCases.getWorkById(work._id.toString());
     expect(fetched._id.toString()).toBe(work._id.toString());
     expect(fetched.clientName).toBe('Cliente Test');
@@ -139,6 +148,11 @@ describe('WorkUseCases', () => {
     expect(request._id).toBeDefined();
     expect((request as any).entity).toBe('work');
     expect((request as any).action).toBe('delete');
+
+    // Attempting reversal a second time while pending should fail
+    await expect(WorkUseCases.reverseWork(work._id.toString(), ctx)).rejects.toThrow(
+      'Esta obra ya tiene una solicitud de reversión pendiente en cola para aprobación del administrador.'
+    );
   });
 
   it('reverses work directly as admin in transaction', async () => {

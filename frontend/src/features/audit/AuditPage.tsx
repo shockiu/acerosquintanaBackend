@@ -9,6 +9,7 @@ import { Eye, ShieldAlert } from 'lucide-react';
 import AuditDiffDialog from './components/AuditDiffDialog';
 import type { AuditLog } from './schemas/audit.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination } from '@/components/shared/Pagination';
 
 export default function AuditPage() {
   const [page, setPage] = useState(1);
@@ -101,14 +102,13 @@ export default function AuditPage() {
             </Table>
           </div>
           
-          {data && data.pagination.pages > 1 && (
-            <div className="p-4 border-t flex justify-end gap-2 items-center bg-muted/20">
-              <span className="text-sm text-muted-foreground mr-4">
-                Página {data.pagination.page} de {data.pagination.pages} (Total: {data.pagination.total})
-              </span>
-              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Anterior</Button>
-              <Button variant="outline" size="sm" disabled={page >= data.pagination.pages} onClick={() => setPage(p => p + 1)}>Siguiente</Button>
-            </div>
+          {data && (
+            <Pagination
+              page={page}
+              totalPages={data.pagination.pages}
+              total={data.pagination.total}
+              onPageChange={setPage}
+            />
           )}
         </div>
       )}

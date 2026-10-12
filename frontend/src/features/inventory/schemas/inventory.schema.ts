@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationMetaSchema } from '@/types/pagination';
 
 export const unitSchema = z.object({
   _id: z.string(),
@@ -53,9 +54,28 @@ export const remnantSchema = z.object({
   createdAt: z.string().optional(),
 });
 
+export const paginatedInventoryItemsSchema = z.object({
+  items: z.array(inventoryItemSchema),
+  pagination: paginationMetaSchema,
+});
+export type PaginatedInventoryItems = z.infer<typeof paginatedInventoryItemsSchema>;
+
+export const paginatedCategoriesSchema = z.object({
+  categories: z.array(categorySchema),
+  pagination: paginationMetaSchema,
+});
+export type PaginatedCategories = z.infer<typeof paginatedCategoriesSchema>;
+
+export const paginatedSubcategoriesSchema = z.object({
+  subcategories: z.array(subcategorySchema),
+  pagination: paginationMetaSchema,
+});
+export type PaginatedSubcategories = z.infer<typeof paginatedSubcategoriesSchema>;
+
 export type InventoryItem = z.infer<typeof inventoryItemSchema>;
 export type Category = z.infer<typeof categorySchema>;
 export type Subcategory = z.infer<typeof subcategorySchema>;
 export type Unit = z.infer<typeof unitSchema>;
 export type Remnant = z.infer<typeof remnantSchema>;
+
 export type PieceSpec = z.infer<typeof pieceSpecSchema>;

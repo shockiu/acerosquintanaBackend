@@ -33,3 +33,26 @@ export const purchaseSchema = z.object({
     id: z.string().min(1),
   })
 });
+
+export const updateItemSchema = z.object({
+  body: z.object({
+    subcategory: z.string().min(1).optional(),
+    name: z.string().min(1).optional(),
+    description: z.string().optional(),
+    kind: z.enum(['material', 'tool']).optional(),
+    pieceSpec: pieceSpecSchema.nullable().optional(),
+    isActive: z.boolean().optional(),
+    stock: z.number().min(0).optional(),
+    avgUnitCost: z.number().min(0).optional(),
+    adjustmentReason: z.string().optional(),
+    clearRemnants: z.boolean().optional(),
+    itemName: z.string().optional(),
+  }).refine(
+    (v) => v.pieceSpec === undefined || v.pieceSpec === null || v.kind === undefined || v.kind === 'material',
+    { message: 'pieceSpec is only allowed for materials', path: ['pieceSpec'] }
+  ),
+  params: z.object({
+    id: z.string().min(1),
+  }),
+});
+

@@ -60,6 +60,15 @@ describe('ApprovalUseCases', () => {
     const allPending = await ApprovalUseCases.listPending({});
     expect(allPending).toHaveLength(2);
 
+    const paginated: any = await ApprovalUseCases.listPending({}, 1, 1);
+    expect(paginated.requests).toHaveLength(1);
+    expect(paginated.pagination).toEqual({
+      page: 1,
+      limit: 1,
+      total: 2,
+      pages: 2,
+    });
+
     const workOnly = await ApprovalUseCases.listPending({ entity: 'work' });
     expect(workOnly).toHaveLength(1);
     expect(workOnly[0].entity).toBe('work');

@@ -9,6 +9,7 @@ import { useInventoryItems } from '@/features/inventory/hooks/useInventoryData';
 import { inventoryApi } from '@/features/inventory/services/inventoryApi';
 import { Plus, Trash2, Scissors, Package, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { toast } from 'sonner';
 import type { InventoryItem, Remnant } from '@/features/inventory/schemas/inventory.schema';
 
 interface WorkLineState {
@@ -51,40 +52,40 @@ export default function CreateWorkDialog({ open, onOpenChange }: { open: boolean
     e.preventDefault();
 
     if (selectedItems.length === 0) {
-      alert('Debes agregar al menos un material o herramienta.');
+      toast.error('Debes agregar al menos un material o herramienta.');
       return;
     }
 
     for (let i = 0; i < selectedItems.length; i++) {
       const line = selectedItems[i];
       if (!line.item) {
-        alert(`Selecciona un ítem en la fila #${i + 1}`);
+        toast.error(`Selecciona un ítem en la fila #${i + 1}`);
         return;
       }
 
       const invItem = inventoryItems?.find(it => it._id === line.item);
       if (invItem?.pieceSpec) {
         if (line.mode === 'pieces' && (!line.quantity || line.quantity <= 0)) {
-          alert(`Indica la cantidad de piezas enteras en la fila #${i + 1}`);
+          toast.error(`Indica la cantidad de piezas enteras en la fila #${i + 1}`);
           return;
         }
         if (line.mode === 'measure') {
           if (!line.measureUsed || line.measureUsed <= 0) {
-            alert(`Indica la medida a utilizar en la fila #${i + 1}`);
+            toast.error(`Indica la medida a utilizar en la fila #${i + 1}`);
             return;
           }
           if (line.source === 'remnant' && !line.remnant) {
-            alert(`Selecciona qué retazo utilizarás en la fila #${i + 1}`);
+            toast.error(`Selecciona qué retazo utilizarás en la fila #${i + 1}`);
             return;
           }
         }
         if (line.mode === 'waste' && !line.remnant) {
-          alert(`Selecciona el retazo a registrar como merma en la fila #${i + 1}`);
+          toast.error(`Selecciona el retazo a registrar como merma en la fila #${i + 1}`);
           return;
         }
       } else {
         if (!line.quantity || line.quantity <= 0) {
-          alert(`Indica una cantidad válida en la fila #${i + 1}`);
+          toast.error(`Indica una cantidad válida en la fila #${i + 1}`);
           return;
         }
       }
@@ -96,29 +97,34 @@ export default function CreateWorkDialog({ open, onOpenChange }: { open: boolean
       performedAt: new Date(performedAt).toISOString(),
       items: selectedItems.map(l => {
         const inv = inventoryItems?.find(it => it._id === l.item);
+        const itemName = inv?.name;
+        const unitSymbol = (inv?.pieceSpec?.measureUnit as any)?.symbol || 'm';
         if (inv?.pieceSpec) {
           if (l.mode === 'pieces') {
-            return { item: l.item, mode: 'pieces', quantity: Number(l.quantity) };
+            return { item: l.item, itemName, mode: 'pieces', quantity: Number(l.quantity) };
           }
           if (l.mode === 'measure') {
             return {
               item: l.item,
+              itemName,
               mode: 'measure',
               source: l.source || 'whole_piece',
               remnant: l.source === 'remnant' ? l.remnant : undefined,
               measureUsed: Number(l.measureUsed),
+              unitSymbol,
             };
           }
           if (l.mode === 'waste') {
             return {
               item: l.item,
+              itemName,
               mode: 'waste',
               remnant: l.remnant,
               note: l.note,
             };
           }
         }
-        return { item: l.item, quantity: Number(l.quantity) };
+        return { item: l.item, itemName, quantity: Number(l.quantity) };
       }),
     };
 

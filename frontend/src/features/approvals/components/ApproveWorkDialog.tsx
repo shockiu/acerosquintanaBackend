@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useApproveRequest } from '../hooks/useApprovalsData';
+import { useInventoryItems } from '@/features/inventory/hooks/useInventoryData';
 import type { ChangeRequest } from '../schemas/approvals.schema';
 
 export default function ApproveWorkDialog({ open, onOpenChange, request }: { open: boolean, onOpenChange: (open: boolean) => void, request: ChangeRequest }) {
   const { mutate: approve, isPending } = useApproveRequest();
   const [chargedPrice, setChargedPrice] = useState('');
+  const { data: inventoryData } = useInventoryItems();
+  const inventoryItems = Array.isArray(inventoryData) ? inventoryData : ((inventoryData as any)?.items ?? []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,20 +36,33 @@ export default function ApproveWorkDialog({ open, onOpenChange, request }: { ope
         {payload.items && payload.items.length > 0 && (
           <div className="space-y-1.5 p-3 bg-muted/40 rounded-md border text-xs">
             <span className="font-semibold text-muted-foreground block mb-1">Detalle de consumo solicitado:</span>
-            {payload.items.map((it: any, idx: number) => (
-              <div key={idx} className="flex justify-between items-center py-1 border-b last:border-0">
-                <span className="truncate max-w-[200px]">{it.item?.name || `Material #${idx + 1}`}</span>
-                <span className="font-medium text-primary">
-                  {it.mode === 'pieces'
-                    ? `${it.quantity} pieza(s) enteras`
-                    : it.mode === 'measure'
-                    ? `${it.measureUsed} (desde ${it.source === 'whole_piece' ? 'pieza nueva' : 'retazo'})`
-                    : it.mode === 'waste'
-                    ? 'Descarte de retazo'
-                    : `${it.quantity} unid.`}
-                </span>
-              </div>
-            ))}
+            {payload.items.map((it: any, idx: number) => {
+              const inv = typeof it.item === 'object' && it.item
+                ? it.item
+                : inventoryItems.find((i: any) => i._id === it.item);
+              const name = it.itemName || inv?.name || `Material #${idx + 1}`;
+              const unitSymbol = it.unitSymbol || (inv?.pieceSpec?.measureUnit as any)?.symbol || 'm';
+
+              return (
+                <div key={idx} className="flex justify-between items-center py-1.5 border-b last:border-0 gap-2">
+                  <div className="min-w-0">
+                    <span className="font-semibold text-foreground block truncate">{name}</span>
+                    {inv?.description && (
+                      <span className="text-[10px] text-muted-foreground block truncate">{inv.description}</span>
+                    )}
+                  </div>
+                  <span className="font-medium text-primary text-right shrink-0">
+                    {it.mode === 'pieces'
+                      ? `${it.quantity} pz. enteras`
+                      : it.mode === 'measure'
+                      ? `${it.measureUsed} ${unitSymbol} (${it.source === 'whole_piece' ? 'pieza nueva' : 'retazo'})`
+                      : it.mode === 'waste'
+                      ? 'Descarte de retazo'
+                      : `${it.quantity} unid.`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 

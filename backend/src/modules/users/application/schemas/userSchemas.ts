@@ -28,3 +28,13 @@ export const toggleUserStatusSchema = z.object({
     id: z.string().min(1),
   })
 });
+
+export const changePasswordSchema = z.object({
+  body: z.object({
+    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  }),
+  params: z.object({
+    id: z.string().min(1, 'ID de usuario requerido'),
+  }),
+});
+

@@ -18,6 +18,7 @@ export default function ApprovePurchaseDialog({ open, onOpenChange, request }: {
   };
 
   const payload = request.payload;
+  const matName = request.targetName || request.targetDoc?.name || payload?.name || payload?.itemName || 'Material';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -25,10 +26,20 @@ export default function ApprovePurchaseDialog({ open, onOpenChange, request }: {
         <DialogHeader>
           <DialogTitle>Aprobar Compra de Material</DialogTitle>
           <DialogDescription>
-            El operario registró la entrada de <strong>{payload.quantity} unidades</strong>.
-            Por favor, asigna el costo total (factura) de esta compra para calcular el Costo Promedio.
+            Revisa y confirma la entrada de inventario para <strong>{matName}</strong>.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1.5">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Material / Ítem:</span>
+            <span className="font-semibold text-foreground">{matName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Cantidad Ingresada:</span>
+            <span className="font-bold text-foreground">{payload.quantity} unidades</span>
+          </div>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Costo Total (Monto Factura) $</Label>

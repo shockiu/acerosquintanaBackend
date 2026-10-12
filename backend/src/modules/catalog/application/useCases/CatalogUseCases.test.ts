@@ -36,6 +36,15 @@ describe('CatalogUseCases', () => {
     const list = await CatalogUseCases.listCategories();
     expect(list).toHaveLength(1);
     expect(list[0].name).toBe('Vigas');
+
+    const paginated: any = await CatalogUseCases.listCategories({}, 1, 10);
+    expect(paginated.categories).toHaveLength(1);
+    expect(paginated.pagination).toEqual({
+      page: 1,
+      limit: 10,
+      total: 1,
+      pages: 1,
+    });
   });
 
   it('prevents duplicate category creation', async () => {

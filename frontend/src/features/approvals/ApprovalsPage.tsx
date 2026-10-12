@@ -5,21 +5,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { Pagination } from '@/components/shared/Pagination';
 import { usePendingRequests } from './hooks/useApprovalsData';
 import type { ChangeRequest } from './schemas/approvals.schema';
 import ApprovePurchaseDialog from './components/ApprovePurchaseDialog';
 import ApproveWorkDialog from './components/ApproveWorkDialog';
 import ApproveReversalDialog from './components/ApproveReversalDialog';
 import ApproveRemnantDiscardDialog from './components/ApproveRemnantDiscardDialog';
+import ApproveUpdateDialog from './components/ApproveUpdateDialog';
 import RejectDialog from './components/RejectDialog';
 
 export default function ApprovalsPage() {
-  const { data: requests, isLoading, isError } = usePendingRequests();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = usePendingRequests({ page, limit: 10 });
+
+  const requests = Array.isArray(data) ? data : data?.requests ?? [];
+  const pagination = !Array.isArray(data) && data?.pagination ? data.pagination : null;
   
   const [purchaseTarget, setPurchaseTarget] = useState<ChangeRequest | null>(null);
   const [workTarget, setWorkTarget] = useState<ChangeRequest | null>(null);
   const [reversalTarget, setReversalTarget] = useState<ChangeRequest | null>(null);
   const [remnantDiscardTarget, setRemnantDiscardTarget] = useState<ChangeRequest | null>(null);
+  const [updateTarget, setUpdateTarget] = useState<ChangeRequest | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ChangeRequest | null>(null);
 
   const handleApprove = (req: ChangeRequest) => {
@@ -31,23 +38,41 @@ export default function ApprovalsPage() {
       setWorkTarget(req);
     } else if (req.entity === 'remnant' && req.action === 'discard') {
       setRemnantDiscardTarget(req);
+    } else if (req.action === 'update' || (req.entity === 'inventoryItem' && req.action === 'create')) {
+      setUpdateTarget(req);
     }
   };
 
   const getRequestDescription = (req: ChangeRequest) => {
+    const targetName = req.targetName || req.targetDoc?.name || req.targetDoc?.clientName || req.payload?.name || req.payload?.itemName || '';
+
     if (req.action === 'purchase') {
-      return `Llegada de Material: ${req.payload?.quantity ?? 0} unidades`;
+      const matName = targetName || req.payload?.name || req.payload?.itemName || 'Material';
+      return `Llegada de Material: ${matName} (${req.payload?.quantity ?? 0} unidades)`;
     }
     if (req.entity === 'work' && req.action === 'delete') {
-      return `Reversión de Obra ID: ${req.targetId || '-'}`;
+      const workDesc = targetName || req.targetDoc?.description || req.payload?.description || (req.payload?.clientName ? `${req.payload.clientName} - ${req.payload.description}` : 'Obra');
+      return `Reversión de Obra: ${workDesc}`;
     }
     if (req.entity === 'work') {
       return `Obra nueva: ${req.payload?.clientName || 'Sin cliente'} - ${req.payload?.description || ''}`;
     }
     if (req.entity === 'remnant' && req.action === 'discard') {
-      return `Descarte de Retazo ID: ${req.targetId || '-'}${req.payload?.note ? ` (${req.payload.note})` : ''}`;
+      const remName = targetName || (req.targetDoc?.itemName ? `${req.targetDoc.itemName} (${req.targetDoc.measure}m)` : (req.payload?.itemName ? `${req.payload.itemName} (${req.payload.measure}m)` : 'Retazo'));
+      return `Descarte de Retazo: ${remName}${req.payload?.note ? ` (${req.payload.note})` : ''}`;
     }
-    return `Operación genérica: ${req.action} ${req.entity}`;
+    if (req.action === 'update') {
+      const entName = req.entity === 'inventoryItem' ? 'Ítem' : req.entity === 'category' ? 'Categoría' : 'Subcategoría';
+      const resolvedName = req.payload?.name || req.payload?.itemName || targetName || req.targetDoc?.name;
+      const displayName = resolvedName ? `"${resolvedName}"` : '';
+      const stockChange = req.payload?.stock !== undefined ? ` [Stock a: ${req.payload.stock}]` : '';
+      const reason = req.payload?.adjustmentReason ? ` - Motivo: "${req.payload.adjustmentReason}"` : '';
+      return `Ajuste de ${entName}${displayName ? `: ${displayName}` : ''}${stockChange}${reason}`;
+    }
+    if (req.entity === 'inventoryItem' && req.action === 'create') {
+      return `Nuevo Ítem: ${req.payload?.name || '-'}`;
+    }
+    return `Operación: ${req.action} ${req.entity}${targetName ? ` (${targetName})` : ''}`;
   };
 
   return (
@@ -56,7 +81,7 @@ export default function ApprovalsPage() {
         title="Bandeja de Aprobaciones" 
         description="Revisa, asigna precios y aprueba las operaciones realizadas por los operarios."
         actions={
-          <Badge variant="secondary">{requests?.length ?? 0} pendientes</Badge>
+          <Badge variant="secondary">{pagination ? pagination.total : requests.length} pendientes</Badge>
         }
       />
 
@@ -96,6 +121,8 @@ export default function ApprovalsPage() {
                               ? 'destructive'
                               : r.entity === 'remnant'
                               ? 'secondary'
+                              : r.action === 'update'
+                              ? 'default'
                               : 'warning'
                           }
                         >
@@ -107,6 +134,10 @@ export default function ApprovalsPage() {
                             ? 'Obra'
                             : r.entity === 'remnant' && r.action === 'discard'
                             ? 'Descarte Retazo'
+                            : r.action === 'update'
+                            ? (r.payload?.stock !== undefined ? 'Ajuste Stock' : 'Modificación')
+                            : r.action === 'create' && r.entity === 'inventoryItem'
+                            ? 'Nuevo Ítem'
                             : 'Otro'}
                         </Badge>
                       </TableCell>
@@ -125,6 +156,15 @@ export default function ApprovalsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {pagination && (
+            <Pagination
+              page={page}
+              totalPages={pagination.pages}
+              total={pagination.total}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       )}
 
@@ -139,6 +179,9 @@ export default function ApprovalsPage() {
       )}
       {remnantDiscardTarget && (
         <ApproveRemnantDiscardDialog open={!!remnantDiscardTarget} onOpenChange={(v) => !v && setRemnantDiscardTarget(null)} request={remnantDiscardTarget} />
+      )}
+      {updateTarget && (
+        <ApproveUpdateDialog open={!!updateTarget} onOpenChange={(v) => !v && setUpdateTarget(null)} request={updateTarget} />
       )}
       {rejectTarget && (
         <RejectDialog open={!!rejectTarget} onOpenChange={(v) => !v && setRejectTarget(null)} request={rejectTarget} />

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useItemRemnants, useDiscardRemnant } from '../hooks/useInventoryData';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Trash2, Scissors } from 'lucide-react';
@@ -20,17 +21,12 @@ export default function ViewRemnantsDialog({
   const { admin } = useAuth();
   const isAdmin = admin?.role === 'admin';
   const [filterStatus, setFilterStatus] = useState<string>('available');
+  const [remnantToDiscard, setRemnantToDiscard] = useState<any | null>(null);
 
   const { data: remnants, isLoading } = useItemRemnants(item._id, filterStatus === 'all' ? undefined : filterStatus);
   const { mutate: discard, isPending: isDiscarding } = useDiscardRemnant();
 
   const unitSymbol = (item.pieceSpec?.measureUnit as any)?.symbol || 'm';
-
-  const handleDiscard = (remnantId: string) => {
-    if (confirm('¿Estás seguro de que deseas descartar este retazo como merma?')) {
-      discard({ remnantId, note: 'Descarte manual desde panel de inventario' });
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,7 +121,7 @@ export default function ViewRemnantsDialog({
                             size="sm"
                             variant="ghost"
                             className="text-destructive h-7 px-2 text-xs"
-                            onClick={() => handleDiscard(r._id)}
+                            onClick={() => setRemnantToDiscard(r)}
                             disabled={isDiscarding}
                           >
                             <Trash2 className="h-3.5 w-3.5 mr-1" /> Descartar
@@ -144,6 +140,30 @@ export default function ViewRemnantsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={!!remnantToDiscard}
+        onOpenChange={(v) => !v && setRemnantToDiscard(null)}
+        title="Descartar Retazo como Merma"
+        description={
+          remnantToDiscard
+            ? `¿Estás seguro de que deseas descartar el retazo de ${Number(remnantToDiscard.measure).toFixed(2)} ${unitSymbol}? Pasará al estado descartado y se registrará en el historial de mermas.`
+            : ''
+        }
+        confirmLabel="Descartar Retazo"
+        destructive={true}
+        isPending={isDiscarding}
+        onConfirm={() => {
+          if (remnantToDiscard) {
+            discard(
+              { remnantId: remnantToDiscard._id, note: 'Descarte manual desde panel de inventario' },
+              {
+                onSuccess: () => setRemnantToDiscard(null),
+              }
+            );
+          }
+        }}
+      />
     </Dialog>
   );
 }

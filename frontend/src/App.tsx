@@ -8,6 +8,8 @@ import MainLayout from '@/layouts/MainLayout/MainLayout';
 import { LoadingState } from '@/components/shared/states';
 import { MAIN_PAGES } from '@/pages.config';
 
+import RoleGuard from '@/app/router/RoleGuard';
+
 export default function App() {
   return (
     <AppProviders>
@@ -21,13 +23,15 @@ export default function App() {
               </AuthGuard>
             }
           >
-            {MAIN_PAGES.map(({ path, component: Component }) => (
+            {MAIN_PAGES.map(({ path, component: Component, roles }) => (
               <Route
                 key={path}
                 path={path}
                 element={
                   <Suspense fallback={<LoadingState />}>
-                    <Component />
+                    <RoleGuard roles={roles}>
+                      <Component />
+                    </RoleGuard>
                   </Suspense>
                 }
               />

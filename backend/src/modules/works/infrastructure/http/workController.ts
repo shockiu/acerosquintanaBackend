@@ -7,8 +7,24 @@ import { RoleSerializer } from '../../../../shared/serialization/RoleSerializer'
 export class WorkController {
   static async listWorks(req: Request, res: Response, next: NextFunction) {
     try {
-      const works = await WorkUseCases.listWorks();
-      const serialized = RoleSerializer.serialize(works, req.user.role);
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const filters = {
+        status: req.query.status as string | undefined,
+        search: req.query.search as string | undefined,
+      };
+
+      const result: any = await WorkUseCases.listWorks(filters, page, limit);
+
+      if (page && limit && result.pagination) {
+        const serialized = RoleSerializer.serialize(result.works, req.user.role);
+        return res.json(success({
+          works: serialized,
+          pagination: result.pagination,
+        }));
+      }
+
+      const serialized = RoleSerializer.serialize(result, req.user.role);
       res.json(success(serialized));
     } catch (error) {
       next(error);

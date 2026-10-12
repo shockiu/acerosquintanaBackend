@@ -3,6 +3,7 @@ import { UserUseCases } from './UserUseCases';
 import { User } from '../../../../models/User';
 import { connectTestDb, clearTestDb, closeTestDb } from '../../../../tests/helpers/testDb';
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 describe('UserUseCases', () => {
   beforeAll(async () => {
@@ -120,4 +121,65 @@ describe('UserUseCases', () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
     await expect(UserUseCases.toggleStatus(fakeId, false)).rejects.toThrow('User not found');
   });
+
+  it('changes password successfully with bcrypt hashing', async () => {
+    const user = await UserUseCases.createUser({
+      name: 'Password User',
+      email: 'pwdchange@aceros.com',
+      password: 'initialPassword1',
+      role: 'user',
+    });
+
+    const updated = await UserUseCases.changePassword(user._id.toString(), 'newPassword999');
+    expect(updated._id).toBeDefined();
+    expect((updated as any).passwordHash).toBeUndefined();
+
+    const dbUser = await User.findById(user._id).select('+passwordHash');
+    expect(dbUser?.passwordHash).toBeDefined();
+    const isNewValid = await bcrypt.compare('newPassword999', dbUser!.passwordHash);
+    expect(isNewValid).toBe(true);
+
+    const isOldValid = await bcrypt.compare('initialPassword1', dbUser!.passwordHash);
+    expect(isOldValid).toBe(false);
+  });
+
+  it('throws error when changing password of nonexistent user', async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    await expect(UserUseCases.changePassword(fakeId, 'secret123')).rejects.toThrow('User not found');
+  });
+
+  it('paginates and searches users in listUsers', async () => {
+    await UserUseCases.createUser({
+      name: 'Alpha Search',
+      email: 'alpha@aceros.com',
+      password: 'pwd',
+      role: 'user',
+    });
+    await UserUseCases.createUser({
+      name: 'Beta User',
+      email: 'beta@aceros.com',
+      password: 'pwd',
+      role: 'admin',
+    });
+
+    const paginated: any = await UserUseCases.listUsers({ search: 'alpha' }, 1, 10);
+    expect(paginated.users).toHaveLength(1);
+    expect(paginated.users[0].name).toBe('Alpha Search');
+    expect(paginated.pagination.total).toBe(1);
+    expect(paginated.pagination.page).toBe(1);
+  });
+
+  it('prevents self-deactivation of admin user', async () => {
+    const admin = await UserUseCases.createUser({
+      name: 'Admin Self',
+      email: 'adminself@aceros.com',
+      password: 'pwd',
+      role: 'admin',
+    });
+
+    await expect(
+      UserUseCases.toggleStatus(admin._id.toString(), false, admin._id.toString())
+    ).rejects.toThrow('No puedes desactivar tu propia cuenta');
+  });
 });
+

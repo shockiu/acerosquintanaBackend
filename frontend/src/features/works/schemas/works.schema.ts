@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationMetaSchema } from '@/types/pagination';
 import { inventoryItemSchema } from '@/features/inventory/schemas/inventory.schema';
 
 export const workWasteItemSchema = z.object({
@@ -38,6 +39,7 @@ export const workSchema = z.object({
   wasteCost: z.coerce.number().optional(), // Admin solo
   totalCost: z.coerce.number().optional(), // Alias
   profit: z.coerce.number().optional(), // Admin solo
+  hasPendingReversal: z.boolean().optional(),
   registeredBy: z.object({
     name: z.string().optional(),
     email: z.string(),
@@ -47,3 +49,10 @@ export const workSchema = z.object({
 export type Work = z.infer<typeof workSchema>;
 export type WorkItem = z.infer<typeof workItemSchema>;
 export type WorkWasteItem = z.infer<typeof workWasteItemSchema>;
+
+export const paginatedWorksSchema = z.object({
+  works: z.array(workSchema),
+  pagination: paginationMetaSchema,
+});
+export type PaginatedWorks = z.infer<typeof paginatedWorksSchema>;
+

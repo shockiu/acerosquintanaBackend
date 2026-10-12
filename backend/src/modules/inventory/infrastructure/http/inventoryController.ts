@@ -10,16 +10,30 @@ export class InventoryController {
       const filters = {
         subcategory: req.query.subcategory,
         kind: req.query.kind,
+        search: req.query.search,
       };
-      const items = await InventoryUseCases.listItems(filters);
-      
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+
+      const result = await InventoryUseCases.listItems(filters, page, limit);
+
+      if (page && limit && (result as any).pagination) {
+        const paginatedResult = result as { items: any[]; pagination: any };
+        const serialized = RoleSerializer.serialize(paginatedResult.items, req.user.role);
+        return res.json(success({
+          items: serialized,
+          pagination: paginatedResult.pagination,
+        }));
+      }
+
       // Filter out sensitive fields for users
-      const serialized = RoleSerializer.serialize(items, req.user.role);
+      const serialized = RoleSerializer.serialize(result, req.user.role);
       res.json(success(serialized));
     } catch (error) {
       next(error);
     }
   }
+
 
   static async createItem(req: Request, res: Response, next: NextFunction) {
     try {
@@ -30,6 +44,19 @@ export class InventoryController {
       next(error);
     }
   }
+
+  static async updateItem(req: Request, res: Response, next: NextFunction) {
+    try {
+      const ctx: ActionContext = { actorId: req.user._id, role: req.user.role, ip: req.ip };
+      const result: any = await InventoryUseCases.updateItem(req.params.id as string, req.body, ctx);
+      const statusCode = result?.status === 'pending' ? 202 : 200;
+      res.status(statusCode).json(success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
 
   static async registerPurchase(req: Request, res: Response, next: NextFunction) {
     try {

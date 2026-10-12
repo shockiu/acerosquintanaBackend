@@ -1,9 +1,10 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IChangeRequest extends Document {
-  entity: 'inventoryItem' | 'inventoryMovement' | 'work' | 'remnant';
+  entity: 'inventoryItem' | 'inventoryMovement' | 'work' | 'remnant' | 'category' | 'subcategory';
   action: 'create' | 'update' | 'delete' | 'purchase' | 'discard';
   targetId?: Types.ObjectId;
+  targetName?: string;
   payload: any;
   status: 'pending' | 'approved' | 'rejected';
   requestedBy: Types.ObjectId;
@@ -18,7 +19,7 @@ const changeRequestSchema = new Schema<IChangeRequest>(
   {
     entity: {
       type: String,
-      enum: ['inventoryItem', 'inventoryMovement', 'work', 'remnant'],
+      enum: ['inventoryItem', 'inventoryMovement', 'work', 'remnant', 'category', 'subcategory'],
       required: true,
     },
     action: {
@@ -27,6 +28,7 @@ const changeRequestSchema = new Schema<IChangeRequest>(
       required: true,
     },
     targetId: { type: Schema.Types.ObjectId }, // Nullable for create
+    targetName: { type: String },
     payload: { type: Schema.Types.Mixed, required: true },
     status: {
       type: String,

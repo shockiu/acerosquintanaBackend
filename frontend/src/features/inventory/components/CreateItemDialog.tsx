@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useCreateItem, useSubcategories, useUnits } from '../hooks/useInventoryData';
+import { toast } from 'sonner';
 
 export default function CreateItemDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { mutate: create, isPending } = useCreateItem();
@@ -46,17 +47,17 @@ export default function CreateItemDialog({ open, onOpenChange }: { open: boolean
 
     if (kind === 'material' && enablePieceTracking) {
       if (!pieceSize || Number(pieceSize) <= 0) {
-        alert('El tamaño estándar de la pieza debe ser mayor a 0');
+        toast.error('El tamaño estándar de la pieza debe ser mayor a 0');
         return;
       }
       if (!measureUnit) {
-        alert('Selecciona la unidad de medida para el corte (ej. Metro)');
+        toast.error('Selecciona la unidad de medida para el corte (ej. Metro)');
         return;
       }
 
       const selectedUnitObj = units?.find(u => u._id === measureUnit);
       if (selectedUnitObj && selectedUnitObj.allowsDecimals === false) {
-        alert(`La unidad "${selectedUnitObj.name}" es indivisible (no permite decimales). Para control de retazos debes seleccionar una unidad dimensional continua como Metro o Centímetro.`);
+        toast.error(`La unidad "${selectedUnitObj.name}" es indivisible (no permite decimales). Para control de retazos debes seleccionar una unidad dimensional continua como Metro o Centímetro.`);
         return;
       }
 

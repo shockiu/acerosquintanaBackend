@@ -5,20 +5,49 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { ErrorState, EmptyState, LoadingState } from '@/components/shared/states';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Download, Eye } from 'lucide-react';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { Pagination } from '@/components/shared/Pagination';
 import CreateWorkDialog from './components/CreateWorkDialog';
 import ViewWorkDetailsDialog from './components/ViewWorkDetailsDialog';
 import type { Work } from './schemas/works.schema';
 
+function parseDecimal(val: any): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  if (typeof val === 'object') {
+    if ('$numberDecimal' in val) {
+      const parsed = parseFloat(val.$numberDecimal);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    if (typeof val.toString === 'function') {
+      const s = val.toString();
+      if (s && s !== '[object Object]') {
+        const parsed = parseFloat(s);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+    }
+  }
+  return 0;
+}
+
 export default function WorksPage() {
   const { admin } = useAuth();
   const isAdmin = admin?.role === 'admin';
-  const { data: works, isLoading, isError } = useWorks();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useWorks({ page, limit: 10 });
   const { exportWorks } = useExportWorks();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
+
+  const works = Array.isArray(data) ? data : data?.works ?? [];
+  const pagination = !Array.isArray(data) && data?.pagination ? data.pagination : null;
 
   return (
     <div className="space-y-4">
@@ -74,23 +103,32 @@ export default function WorksPage() {
                         {new Date(w.performedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-medium">{w.clientName}</TableCell>
-                      <TableCell><StatusBadge status={w.status} /></TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 items-start">
+                          <StatusBadge status={w.status} />
+                          {w.hasPendingReversal && (
+                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-500/50 text-amber-600 bg-amber-500/10 font-medium">
+                              Reversión en Cola
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {w.registeredBy?.name || w.registeredBy?.email || '-'}
                       </TableCell>
                       {isAdmin && (
                         <>
                           <TableCell className="text-right text-muted-foreground text-sm">
-                            ${Number(w.materialsCost || w.totalCost || 0).toFixed(2)}
+                            ${parseDecimal(w.materialsCost || w.totalCost).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right text-amber-600 text-sm">
-                            ${Number(w.wasteCost || 0).toFixed(2)}
+                            ${parseDecimal(w.wasteCost).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right text-info font-medium text-sm">
-                            ${Number(w.chargedPrice || 0).toFixed(2)}
+                            ${parseDecimal(w.chargedPrice).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right text-success font-bold text-sm">
-                            ${Number(w.profit || 0).toFixed(2)}
+                            ${parseDecimal(w.profit).toFixed(2)}
                           </TableCell>
                         </>
                       )}
@@ -113,6 +151,15 @@ export default function WorksPage() {
               </TableBody>
             </Table>
           </div>
+
+          {pagination && (
+            <Pagination
+              page={page}
+              totalPages={pagination.pages}
+              total={pagination.total}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       )}
 

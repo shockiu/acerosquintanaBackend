@@ -6,9 +6,22 @@ import { ActionContext } from '../../domain/IChangeHandler';
 export class ApprovalController {
   static async listPending(req: Request, res: Response, next: NextFunction) {
     try {
-      const filters = req.query.entity ? { entity: req.query.entity } : {};
-      const requests = await ApprovalUseCases.listPending(filters);
-      res.json(success(requests));
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const filters = {
+        entity: req.query.entity as string | undefined,
+      };
+
+      const result: any = await ApprovalUseCases.listPending(filters, page, limit);
+
+      if (page && limit && result.pagination) {
+        return res.json(success({
+          requests: result.requests,
+          pagination: result.pagination,
+        }));
+      }
+
+      res.json(success(result));
     } catch (error) {
       next(error);
     }

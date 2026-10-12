@@ -8,16 +8,27 @@ import { changeHandlerRegistry } from '../../../approvals/domain/ChangeHandlerRe
 import { uow } from '../../../../shared/infrastructure/MongoUnitOfWork';
 
 export class InventoryUseCases {
-  static async listItems(filters: any) {
+  static async listItems(filters: any, page?: number, limit?: number) {
     const query: any = {};
     if (filters.subcategory) query.subcategory = filters.subcategory;
     if (filters.kind) query.kind = filters.kind;
+    if (filters.search) {
+      query.name = { $regex: filters.search, $options: 'i' };
+    }
 
-    const items = await InventoryItem.find(query)
+    let itemsQuery = InventoryItem.find(query)
       .populate('subcategory')
       .populate('pieceSpec.measureUnit')
-      .sort({ name: 1 })
-      .lean();
+      .sort({ name: 1 });
+
+    let total = 0;
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      total = await InventoryItem.countDocuments(query);
+      itemsQuery = itemsQuery.skip(skip).limit(limit) as any;
+    }
+
+    const items = await itemsQuery.lean();
 
     // Enrich items with piece tracking metrics
     const enriched = await Promise.all(
@@ -59,8 +70,21 @@ export class InventoryUseCases {
       })
     );
 
+    if (page && limit) {
+      return {
+        items: enriched,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    }
+
     return enriched;
   }
+
 
   static async getItemRemnants(itemId: string, status?: string) {
     const query: any = { item: itemId };
@@ -73,10 +97,24 @@ export class InventoryUseCases {
   }
 
   static async discardRemnant(remnantId: string, note: string | undefined, ctx: ActionContext) {
-    return this.executeOrRequest('remnant', 'discard', { note }, ctx, remnantId);
+    let targetName: string | undefined;
+    let itemName = 'Material';
+    let measure = 0;
+    try {
+      const remnant = await Remnant.findById(remnantId).populate('item', 'name').lean();
+      if (remnant) {
+        itemName = (remnant.item as any)?.name || 'Material';
+        measure = Number(remnant.measure?.toString() || 0);
+        targetName = `${itemName} (${measure}m)`;
+      }
+    } catch {
+      // ignore
+    }
+    const payload = { note, itemName, measure };
+    return this.executeOrRequest('remnant', 'discard', payload, ctx, remnantId, targetName);
   }
 
-  static async executeOrRequest(entity: string, action: string, payload: any, ctx: ActionContext, targetId?: string) {
+  static async executeOrRequest(entity: string, action: string, payload: any, ctx: ActionContext, targetId?: string, targetName?: string) {
     if (ctx.role === 'user') {
       // Create pending request
       if (action === 'purchase' && (payload.unitCost !== undefined || payload.totalCost !== undefined)) {
@@ -84,13 +122,14 @@ export class InventoryUseCases {
         delete payload.unitCost;
         delete payload.totalCost;
       }
-      return ApprovalUseCases.submitRequest({ entity, action, targetId, payload }, ctx);
+      return ApprovalUseCases.submitRequest({ entity, action, targetId, targetName, payload }, ctx);
     } else {
       // Admin: Apply directly (create pseudo-request internally to pass to handler, then approve)
       const requestData = {
         entity,
         action,
         targetId,
+        targetName,
         payload,
         status: 'approved',
         requestedBy: ctx.actorId,
@@ -121,7 +160,34 @@ export class InventoryUseCases {
     return this.executeOrRequest('inventoryItem', 'create', data, ctx);
   }
 
+  static async updateItem(itemId: string, data: any, ctx: ActionContext) {
+    let targetName: string | undefined;
+    try {
+      const existingItem = await InventoryItem.findById(itemId).select('name kind subcategory').lean();
+      if (existingItem) {
+        targetName = existingItem.name;
+        if (!data.name) data.name = existingItem.name;
+        data.itemName = existingItem.name;
+      }
+    } catch {
+      // ignore
+    }
+    return this.executeOrRequest('inventoryItem', 'update', data, ctx, itemId, targetName);
+  }
+
   static async registerPurchase(itemId: string, data: any, ctx: ActionContext) {
-    return this.executeOrRequest('inventoryMovement', 'purchase', data, ctx, itemId);
+    let targetName: string | undefined;
+    try {
+      const existingItem = await InventoryItem.findById(itemId).select('name').lean();
+      if (existingItem) {
+        targetName = existingItem.name;
+        if (!data.name) data.name = existingItem.name;
+        data.itemName = existingItem.name;
+      }
+    } catch {
+      // ignore
+    }
+    return this.executeOrRequest('inventoryMovement', 'purchase', data, ctx, itemId, targetName);
   }
 }
+

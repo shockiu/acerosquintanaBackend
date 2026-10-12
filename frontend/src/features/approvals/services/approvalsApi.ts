@@ -1,11 +1,14 @@
 import apiClient from '@/api/axiosClient';
-import { changeRequestSchema } from '../schemas/approvals.schema';
+import { changeRequestSchema, paginatedChangeRequestsSchema } from '../schemas/approvals.schema';
+import type { ChangeRequest, PaginatedChangeRequests } from '../schemas/approvals.schema';
 import { z } from 'zod';
 
 export const approvalsApi = {
-  async getPendingRequests() {
-    const data = await apiClient.get('/requests');
-    // Filtrar solo pending (aunque el backend ya podría hacerlo)
+  async getPendingRequests(params?: { page?: number; limit?: number; entity?: string }): Promise<ChangeRequest[] | PaginatedChangeRequests> {
+    const data = await apiClient.get('/requests', { params });
+    if (params?.page) {
+      return paginatedChangeRequestsSchema.parse(data);
+    }
     const requests = z.array(changeRequestSchema).parse(data);
     return requests.filter(r => r.status === 'pending');
   },

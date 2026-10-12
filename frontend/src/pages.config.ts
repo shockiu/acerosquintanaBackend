@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BarChart3, Package, ClipboardCheck, ShieldAlert } from 'lucide-react';
+import { BarChart3, Package, ClipboardCheck, ShieldAlert, Users } from 'lucide-react';
 
 export const MAIN_PAGES = [
   {
@@ -32,6 +32,14 @@ export const MAIN_PAGES = [
     roles: ['admin'],
   },
   {
+    path: '/users',
+    name: 'Usuarios',
+    icon: Users,
+    component: lazy(() => import('@/features/users/UsersPage')),
+    showInSidebar: true,
+    roles: ['admin'],
+  },
+  {
     path: '/audit',
     name: 'Auditoría',
     icon: ShieldAlert,
@@ -40,3 +48,4 @@ export const MAIN_PAGES = [
     roles: ['admin'],
   },
 ];
+

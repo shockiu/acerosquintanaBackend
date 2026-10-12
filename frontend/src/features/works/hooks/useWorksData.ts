@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 import { worksApi } from '../services/worksApi';
@@ -6,11 +6,14 @@ import { worksKeys } from '../works.keys';
 import { inventoryKeys } from '@/features/inventory/inventory.keys';
 import { approvalKeys } from '@/features/approvals/approvals.keys';
 import apiClient from '@/api/axiosClient';
+import type { Work, PaginatedWorks } from '../schemas/works.schema';
 
-export function useWorks() {
+export function useWorks(): UseQueryResult<Work[]>;
+export function useWorks(params: { page: number; limit: number; search?: string; status?: string }): UseQueryResult<PaginatedWorks>;
+export function useWorks(params?: { page?: number; limit?: number; search?: string; status?: string }): UseQueryResult<any> {
   return useQuery({
-    queryKey: worksKeys.list(),
-    queryFn: () => worksApi.getWorks(),
+    queryKey: worksKeys.list(params),
+    queryFn: () => worksApi.getWorks(params),
   });
 }
 

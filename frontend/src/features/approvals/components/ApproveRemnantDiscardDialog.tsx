@@ -24,6 +24,8 @@ export default function ApproveRemnantDiscardDialog({
     );
   };
 
+  const remTitle = request.targetName || (request.targetDoc?.itemName ? `${request.targetDoc.itemName} (${request.targetDoc.measure}m)` : 'Retazo');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -33,9 +35,22 @@ export default function ApproveRemnantDiscardDialog({
             Aprobar Descarte de Retazo
           </DialogTitle>
           <DialogDescription>
-            El operario solicitó descartar un retazo como merma (ID: {request.targetId}).
+            El operario solicitó descartar el retazo como merma.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Retazo / Material:</span>
+            <span className="font-semibold text-foreground">{remTitle}</span>
+          </div>
+          {request.targetDoc?.measure && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Medida del Corte:</span>
+              <span className="font-mono text-foreground">{request.targetDoc.measure}m</span>
+            </div>
+          )}
+        </div>
 
         {request.payload?.note && (
           <div className="p-3 bg-muted/40 rounded-md border text-xs">

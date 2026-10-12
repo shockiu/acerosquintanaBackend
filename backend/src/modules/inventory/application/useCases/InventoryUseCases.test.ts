@@ -229,4 +229,39 @@ describe('InventoryUseCases', () => {
     const discarded = await InventoryUseCases.discardRemnant(remnant._id.toString(), 'Descarte directo', ctxAdmin);
     expect(discarded.status).toBe('discarded');
   });
+
+  it('updates item directly as admin and creates change request as user', async () => {
+    const item = await InventoryItem.create({
+      name: 'Item Para Actualizar',
+      kind: 'material',
+      subcategory: subcategory._id,
+      stock: 5,
+      avgUnitCost: 20,
+    });
+
+    // Operario: creates ChangeRequest
+    const ctxUser: any = { actorId: regularUser._id.toString(), role: 'user' };
+    const request: any = await InventoryUseCases.updateItem(
+      item._id.toString(),
+      { name: 'Item Nombre Solicitado' },
+      ctxUser
+    );
+    expect(request.entity).toBe('inventoryItem');
+    expect(request.action).toBe('update');
+    expect(request.status).toBe('pending');
+    expect(request.payload.name).toBe('Item Nombre Solicitado');
+
+    // Admin: applies directly
+    const ctxAdmin: any = { actorId: adminUser._id.toString(), role: 'admin', ip: '127.0.0.1' };
+    const updated: any = await InventoryUseCases.updateItem(
+      item._id.toString(),
+      { name: 'Item Nombre Actualizado Admin' },
+      ctxAdmin
+    );
+    expect(updated.name).toBe('Item Nombre Actualizado Admin');
+
+    const inDb = await InventoryItem.findById(item._id);
+    expect(inDb?.name).toBe('Item Nombre Actualizado Admin');
+  });
 });
+

@@ -36,8 +36,8 @@ export class RoleSerializer {
       if (data._bsontype === 'ObjectID' || data._bsontype === 'ObjectId' || (data.constructor && data.constructor.name === 'ObjectId')) {
         return data.toString();
       }
-      if (data._bsontype === 'Decimal128' || obj._bsontype === 'Decimal128') {
-        return obj.toString();
+      if (data._bsontype === 'Decimal128' || obj._bsontype === 'Decimal128' || (obj && typeof obj === 'object' && '$numberDecimal' in obj)) {
+        return obj.$numberDecimal !== undefined ? obj.$numberDecimal.toString() : obj.toString();
       }
 
       const result: any = {};

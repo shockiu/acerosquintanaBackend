@@ -1,5 +1,6 @@
 import apiClient from '@/api/axiosClient';
-import { workSchema } from '../schemas/works.schema';
+import { workSchema, paginatedWorksSchema } from '../schemas/works.schema';
+import type { Work, PaginatedWorks } from '../schemas/works.schema';
 import { z } from 'zod';
 
 export type WorkItemLineInput =
@@ -18,8 +19,11 @@ export interface CreateWorkPayload {
 }
 
 export const worksApi = {
-  async getWorks() {
-    const data = await apiClient.get('/works');
+  async getWorks(params?: { page?: number; limit?: number; search?: string; status?: string }): Promise<Work[] | PaginatedWorks> {
+    const data = await apiClient.get('/works', { params });
+    if (params?.page) {
+      return paginatedWorksSchema.parse(data);
+    }
     return z.array(workSchema).parse(data);
   },
 
