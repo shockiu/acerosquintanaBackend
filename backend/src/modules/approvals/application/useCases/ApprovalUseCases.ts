@@ -65,7 +65,7 @@ export class ApprovalUseCases {
                 };
 
                 const chargedPriceVal = toVal(work.chargedPrice);
-                const materialsCostVal = toVal(work.materialsCost || work.totalCost);
+                const materialsCostVal = toVal(work.materialsCost || (work as any).totalCost);
                 const wasteCostVal = toVal(work.wasteCost);
                 const profitVal = toVal(work.profit);
 
@@ -106,7 +106,7 @@ export class ApprovalUseCases {
             } else if (req.entity === 'remnant') {
               const remnant = await Remnant.findById(req.targetId)
                 .populate({ path: 'item', select: 'name' })
-                .select('measure code')
+                .select('measure')
                 .lean();
               if (remnant) {
                 const itemName = (remnant.item as any)?.name || 'Material';
@@ -114,7 +114,6 @@ export class ApprovalUseCases {
                 targetDoc = {
                   itemName,
                   measure: remnant.measure,
-                  code: remnant.code,
                 };
                 if (!payload.itemName) payload.itemName = itemName;
               }

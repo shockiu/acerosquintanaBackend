@@ -190,7 +190,7 @@ export class WorkUseCases {
         description: work.description,
         performedAt: work.performedAt,
         chargedPrice: work.chargedPrice?.toString(),
-        materialsCost: (work.materialsCost || work.totalCost)?.toString(),
+        materialsCost: (work.materialsCost || (work as any).totalCost)?.toString(),
         wasteCost: work.wasteCost?.toString(),
         profit: work.profit?.toString(),
         items: (work.items || []).map((it: any) => ({

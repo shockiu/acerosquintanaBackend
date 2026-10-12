@@ -81,7 +81,7 @@ export class UpdateItemHandler implements IChangeHandler {
               ? `Ajuste manual de reducción: de ${oldStock.toString()} a ${newStock.toString()}`
               : `Ajuste manual de incremento: de ${oldStock.toString()} a ${newStock.toString()}`),
           createdBy: request.requestedBy || ctx.actorId,
-          approvedBy: ctx.role === 'admin' ? ctx.actorId : request.approvedBy,
+          approvedBy: ctx.role === 'admin' ? ctx.actorId : (request.reviewedBy || ctx.actorId),
         });
         await movement.save({ session: tx });
       }
