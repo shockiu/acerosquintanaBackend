@@ -32,7 +32,7 @@ export class SaleController {
         });
 
         const itemsSummary = itemsWithoutPrices
-          .map(it => `${it.quantity}${it.unitSymbol ? ` ${it.unitSymbol}` : ''} de ${it.name}`)
+          .map((it: any) => `${it.quantity}${it.unitSymbol ? ` ${it.unitSymbol}` : ''} de ${it.name}`)
           .join(', ');
 
         const payload = {
@@ -182,7 +182,7 @@ export class SaleController {
 
   static async getSale(req: Request, res: Response, next: NextFunction) {
     try {
-      const sale = await Sale.findById(req.params.id)
+      const sale = await Sale.findById(req.params.id as string)
         .populate('registeredBy', 'name email')
         .populate('cancelledBy', 'name email')
         .lean();
@@ -203,7 +203,7 @@ export class SaleController {
       const { reason } = req.body;
 
       if (req.user.role === 'user') {
-        const sale = await Sale.findById(req.params.id);
+        const sale = await Sale.findById(req.params.id as string);
         if (!sale) {
           return res.status(404).json(fail('La venta no fue encontrada'));
         }
@@ -220,7 +220,7 @@ export class SaleController {
           {
             entity: 'sale',
             action: 'cancel',
-            targetId: sale._id,
+            targetId: sale._id.toString(),
             targetName: `Venta ${sale.folio || sale._id} (${sale.buyerName}: ${saleItemsSummary})`,
             payload: {
               reason: reason?.trim(),
@@ -247,7 +247,7 @@ export class SaleController {
 
       // Admin execution
       const sale = await uow.runInTransaction(async (session) => {
-        return await cancelSaleHandler.execute(req.params.id, reason, req.user._id, session);
+        return await cancelSaleHandler.execute(req.params.id as string, reason, req.user._id, session);
       });
 
       await sale.populate('registeredBy', 'name email');
