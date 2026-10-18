@@ -22,7 +22,7 @@ export default function ApprovePurchaseDialog({ open, onOpenChange, request }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aprobar Compra de Material</DialogTitle>
           <DialogDescription>

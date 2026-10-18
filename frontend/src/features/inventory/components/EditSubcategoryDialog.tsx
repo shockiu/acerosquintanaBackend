@@ -59,6 +59,20 @@ export default function EditSubcategoryDialog({
           </div>
         )}
 
+        {subcategory.imageUrl && (
+          <div className="flex items-center gap-3 p-3 bg-muted/40 border rounded-lg">
+            <img
+              src={subcategory.imageUrl}
+              alt={subcategory.name}
+              className="w-14 h-14 rounded-md object-cover border bg-background shrink-0"
+            />
+            <div className="text-xs">
+              <span className="font-semibold text-foreground block">Imagen de Catálogo Asociada</span>
+              <span className="text-muted-foreground">Esta imagen identifica a la subcategoría en el catálogo e inventario.</span>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Tipo de Elementos</Label>

@@ -7,6 +7,8 @@ import { CreateWorkHandler } from '../modules/works/domain/handlers/CreateWorkHa
 import { ReverseWorkHandler } from '../modules/works/domain/handlers/ReverseWorkHandler';
 import { UpdateCategoryHandler } from '../modules/catalog/domain/handlers/UpdateCategoryHandler';
 import { UpdateSubcategoryHandler } from '../modules/catalog/domain/handlers/UpdateSubcategoryHandler';
+import { CreateSaleApprovalHandler } from '../modules/sales/domain/handlers/CreateSaleApprovalHandler';
+import { CancelSaleApprovalHandler } from '../modules/sales/domain/handlers/CancelSaleApprovalHandler';
 
 /**
  * Registers all domain change handlers into the central changeHandlerRegistry.
@@ -22,6 +24,8 @@ export function registerChangeHandlers(): void {
   changeHandlerRegistry.register(new ReverseWorkHandler());
   changeHandlerRegistry.register(new UpdateCategoryHandler());
   changeHandlerRegistry.register(new UpdateSubcategoryHandler());
+  changeHandlerRegistry.register(new CreateSaleApprovalHandler());
+  changeHandlerRegistry.register(new CancelSaleApprovalHandler());
 }
 
 

@@ -28,7 +28,7 @@ export default function ApproveRemnantDiscardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-600">
             <Trash2 className="h-5 w-5" />

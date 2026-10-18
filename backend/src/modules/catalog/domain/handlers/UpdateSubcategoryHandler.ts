@@ -46,6 +46,10 @@ export class UpdateSubcategoryHandler implements IChangeHandler {
       subcategory.kind = payload.kind;
     }
 
+    if (payload.imageUrl !== undefined) {
+      subcategory.imageUrl = payload.imageUrl;
+    }
+
     if (payload.isActive !== undefined) {
       subcategory.isActive = payload.isActive;
     }

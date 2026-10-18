@@ -395,4 +395,61 @@ describe('CreateWorkHandler', () => {
     const updatedTool = await InventoryItem.findById(tool._id);
     expect(updatedTool?.stock.toString()).toBe('3');
   });
+
+  describe('tool lines', () => {
+    let tool: any;
+    const ctx: any = { actorId: new mongoose.Types.ObjectId().toString(), role: 'admin' };
+
+    beforeEach(async () => {
+      tool = await InventoryItem.create({
+        name: 'Esmeril',
+        kind: 'tool',
+        subcategory: subcategory._id,
+        stock: 3,
+        avgUnitCost: '100',
+      });
+    });
+
+    const buildRequest = (line: any, chargedPrice?: number) => ({
+      payload: {
+        clientName: 'Cliente Tools',
+        performedAt: new Date().toISOString(),
+        chargedPrice,
+        items: [{ item: tool._id.toString(), mode: 'tool', ...line }],
+      },
+      requestedBy: new mongoose.Types.ObjectId().toString(),
+    });
+
+    it('returned tool: no stock change, no movement, no loss cost', async () => {
+      const work = await handler.apply(buildRequest({ quantity: 2, lostQuantity: 0 }, 500) as any, {}, ctx, undefined);
+
+      expect((await InventoryItem.findById(tool._id))?.stock.toString()).toBe('3');
+      expect(await InventoryMovement.countDocuments({ item: tool._id })).toBe(0);
+      expect(work.toolLossCost?.toString()).toBe('0');
+      expect(work.profit?.toString()).toBe('500');
+      expect(work.items[0].mode).toBe('tool');
+    });
+
+    it('lost tool: writes off stock, records movement and reduces profit', async () => {
+      const work = await handler.apply(
+        buildRequest({ quantity: 2, lostQuantity: 1, lossReason: 'damaged', note: 'Se quemó el motor' }, 500) as any,
+        {}, ctx, undefined,
+      );
+
+      expect((await InventoryItem.findById(tool._id))?.stock.toString()).toBe('2');
+      const mov = await InventoryMovement.findOne({ item: tool._id, type: 'tool_writeoff' });
+      expect(mov?.quantity.toString()).toBe('-1');
+      expect(mov?.totalCost?.toString()).toBe('100');
+      expect(work.toolLossCost?.toString()).toBe('100');
+      expect(work.profit?.toString()).toBe('400');
+      expect(work.items[0].lossReason).toBe('damaged');
+      expect(work.items[0].lostQuantity?.toString()).toBe('1');
+    });
+
+    it('rejects using more tools than available stock', async () => {
+      await expect(
+        handler.apply(buildRequest({ quantity: 5, lostQuantity: 0 }) as any, {}, ctx, undefined),
+      ).rejects.toThrow('Stock insuficiente de la herramienta');
+    });
+  });
 });

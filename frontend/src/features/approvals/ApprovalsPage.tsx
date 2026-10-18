@@ -15,6 +15,9 @@ import ApproveRemnantDiscardDialog from './components/ApproveRemnantDiscardDialo
 import ApproveUpdateDialog from './components/ApproveUpdateDialog';
 import RejectDialog from './components/RejectDialog';
 
+import ApproveSaleDialog from './components/ApproveSaleDialog';
+import ApproveSaleCancelDialog from './components/ApproveSaleCancelDialog';
+
 export default function ApprovalsPage() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError } = usePendingRequests({ page, limit: 10 });
@@ -27,11 +30,17 @@ export default function ApprovalsPage() {
   const [reversalTarget, setReversalTarget] = useState<ChangeRequest | null>(null);
   const [remnantDiscardTarget, setRemnantDiscardTarget] = useState<ChangeRequest | null>(null);
   const [updateTarget, setUpdateTarget] = useState<ChangeRequest | null>(null);
+  const [saleTarget, setSaleTarget] = useState<ChangeRequest | null>(null);
+  const [saleCancelTarget, setSaleCancelTarget] = useState<ChangeRequest | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ChangeRequest | null>(null);
 
   const handleApprove = (req: ChangeRequest) => {
     if (req.action === 'purchase') {
       setPurchaseTarget(req);
+    } else if (req.entity === 'sale' && req.action === 'create') {
+      setSaleTarget(req);
+    } else if (req.entity === 'sale' && req.action === 'cancel') {
+      setSaleCancelTarget(req);
     } else if (req.entity === 'work' && req.action === 'delete') {
       setReversalTarget(req);
     } else if (req.entity === 'work') {
@@ -46,6 +55,18 @@ export default function ApprovalsPage() {
   const getRequestDescription = (req: ChangeRequest) => {
     const targetName = req.targetName || req.targetDoc?.name || req.targetDoc?.clientName || req.payload?.name || req.payload?.itemName || '';
 
+    if (req.entity === 'sale' && req.action === 'create') {
+      const buyer = req.payload?.buyerName || 'Cliente General';
+      const itemsList = req.payload?.items || [];
+      const itemsSummary = itemsList.length > 0
+        ? itemsList.map((i: any) => `${i.quantity}x ${i.name || 'Ítem'}`).join(', ')
+        : (targetName ? targetName.replace(/^Venta a [^:]+:\s*/, '') : 'Ítems');
+      return `Venta Directa: ${buyer} — [${itemsSummary}]`;
+    }
+    if (req.entity === 'sale' && req.action === 'cancel') {
+      const reason = req.payload?.reason ? ` - Motivo: "${req.payload.reason}"` : '';
+      return `Anulación de Venta: ${targetName}${reason}`;
+    }
     if (req.action === 'purchase') {
       const matName = targetName || req.payload?.name || req.payload?.itemName || 'Material';
       return `Llegada de Material: ${matName} (${req.payload?.quantity ?? 0} unidades)`;
@@ -117,17 +138,23 @@ export default function ApprovalsPage() {
                       <TableCell>
                         <Badge
                           variant={
-                            r.action === 'delete'
+                            r.action === 'delete' || (r.entity === 'sale' && r.action === 'cancel')
                               ? 'destructive'
                               : r.entity === 'remnant'
                               ? 'secondary'
                               : r.action === 'update'
+                              ? 'default'
+                              : r.entity === 'sale' && r.action === 'create'
                               ? 'default'
                               : 'warning'
                           }
                         >
                           {r.action === 'purchase'
                             ? 'Compra'
+                            : r.entity === 'sale' && r.action === 'create'
+                            ? 'Venta'
+                            : r.entity === 'sale' && r.action === 'cancel'
+                            ? 'Anulación Venta'
                             : r.entity === 'work' && r.action === 'delete'
                             ? 'Reversión'
                             : r.entity === 'work'
@@ -170,6 +197,12 @@ export default function ApprovalsPage() {
 
       {purchaseTarget && (
         <ApprovePurchaseDialog open={!!purchaseTarget} onOpenChange={(v) => !v && setPurchaseTarget(null)} request={purchaseTarget} />
+      )}
+      {saleTarget && (
+        <ApproveSaleDialog open={!!saleTarget} onOpenChange={(v) => !v && setSaleTarget(null)} request={saleTarget} />
+      )}
+      {saleCancelTarget && (
+        <ApproveSaleCancelDialog open={!!saleCancelTarget} onOpenChange={(v) => !v && setSaleCancelTarget(null)} request={saleCancelTarget} />
       )}
       {workTarget && (
         <ApproveWorkDialog open={!!workTarget} onOpenChange={(v) => !v && setWorkTarget(null)} request={workTarget} />

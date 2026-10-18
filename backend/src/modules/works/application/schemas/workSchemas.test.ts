@@ -68,6 +68,23 @@ describe('workSchemas', () => {
     expect(workItemLineSchema.parse(valid)).toEqual(valid);
   });
 
+  it('legacy line strips display-only keys like itemName (regression)', () => {
+    const parsed = workItemLineSchema.parse({ item: 'item123', itemName: 'Codo', quantity: 2 });
+    expect(parsed).toEqual({ item: 'item123', quantity: 2 });
+  });
+
+  it('validates tool line and its loss rules', () => {
+    expect(workItemLineSchema.parse({ item: 't1', mode: 'tool', quantity: 2 })).toMatchObject({ lostQuantity: 0 });
+    expect(
+      workItemLineSchema.parse({ item: 't1', mode: 'tool', quantity: 2, lostQuantity: 1, lossReason: 'end_of_life' })
+    ).toMatchObject({ lostQuantity: 1, lossReason: 'end_of_life' });
+
+    // lost > used
+    expect(() => workItemLineSchema.parse({ item: 't1', mode: 'tool', quantity: 1, lostQuantity: 2, lossReason: 'damaged' })).toThrow();
+    // loss without reason
+    expect(() => workItemLineSchema.parse({ item: 't1', mode: 'tool', quantity: 2, lostQuantity: 1 })).toThrow();
+  });
+
   it('validates createWorkSchema body payload', () => {
     const valid = {
       body: {

@@ -5,6 +5,7 @@ export interface ISubcategory extends Document {
   name: string;
   unit: Types.ObjectId;
   kind: 'material' | 'tool';
+  imageUrl?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +17,7 @@ const subcategorySchema = new Schema<ISubcategory>(
     name: { type: String, required: true },
     unit: { type: Schema.Types.ObjectId, ref: 'Unit', required: true },
     kind: { type: String, enum: ['material', 'tool'], default: 'material' },
+    imageUrl: { type: String, default: null },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

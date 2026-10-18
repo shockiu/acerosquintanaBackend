@@ -52,6 +52,14 @@ export interface ConsumptionResult {
  */
 export const WASTE_CHARGED_TO_PROFIT = true;
 
+/**
+ * Business rule configuration:
+ * Tools lost in a work (damaged / end of life) reduce work profit:
+ * profit = chargedPrice - materialsCost - wasteCost - toolLossCost.
+ * Set to false to treat tool losses as a workshop expense only.
+ */
+export const TOOL_LOSS_CHARGED_TO_PROFIT = true;
+
 export class PieceConsumptionService {
   /**
    * Derives costPerMeasure = avgUnitCost / pieceSize

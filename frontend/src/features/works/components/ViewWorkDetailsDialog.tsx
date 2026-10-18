@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useReverseWork } from '../hooks/useWorksData';
 import { useInventoryItems } from '@/features/inventory/hooks/useInventoryData';
-import { Scissors, AlertTriangle, Package, RotateCcw, Clock } from 'lucide-react';
+import { Scissors, AlertTriangle, Package, RotateCcw, Clock, Wrench } from 'lucide-react';
 import type { Work } from '../schemas/works.schema';
 
 function parseDecimal(val: any): number {
@@ -54,6 +54,7 @@ export default function ViewWorkDetailsDialog({
   const chargedPrice = parseDecimal(work.chargedPrice);
   const materialsCost = parseDecimal(work.materialsCost || work.totalCost);
   const wasteCost = parseDecimal(work.wasteCost);
+  const toolLossCost = parseDecimal(work.toolLossCost);
   const profit = parseDecimal(work.profit);
 
   return (
@@ -78,7 +79,7 @@ export default function ViewWorkDetailsDialog({
 
         {/* Financial Summary (Admin Only) */}
         {isAdmin && (
-          <div className="grid grid-cols-4 gap-3 p-3 bg-muted/40 rounded-lg border text-xs">
+          <div className={`grid ${toolLossCost > 0 ? 'grid-cols-5' : 'grid-cols-4'} gap-3 p-3 bg-muted/40 rounded-lg border text-xs`}>
             <div>
               <span className="text-muted-foreground block">Precio Cobrado</span>
               <span className="text-base font-bold text-info">${chargedPrice.toFixed(2)}</span>
@@ -91,6 +92,12 @@ export default function ViewWorkDetailsDialog({
               <span className="text-muted-foreground block">Costo de Merma</span>
               <span className="text-base font-bold text-amber-600">${wasteCost.toFixed(2)}</span>
             </div>
+            {toolLossCost > 0 && (
+              <div>
+                <span className="text-muted-foreground block">Baja Herramientas</span>
+                <span className="text-base font-bold text-destructive">${toolLossCost.toFixed(2)}</span>
+              </div>
+            )}
             <div>
               <span className="text-muted-foreground block">Ganancia Neta</span>
               <span className="text-base font-bold text-success">${profit.toFixed(2)}</span>
@@ -123,7 +130,7 @@ export default function ViewWorkDetailsDialog({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  work.items.map((it, idx) => {
+                  work.items.map((it: any, idx: number) => {
                     const invDoc = typeof it.item === 'object' && it.item
                       ? it.item
                       : inventoryItems.find((inv: any) => inv._id === it.item);
@@ -134,12 +141,21 @@ export default function ViewWorkDetailsDialog({
                       ? invDoc.subcategory.name
                       : undefined;
                     const unitSymbol = (invDoc?.pieceSpec?.measureUnit as any)?.symbol || 'm';
+                    const isTool = it.mode === 'tool' || it.kind === 'tool' || invDoc?.kind === 'tool';
+                    const lostQty = parseDecimal(it.lostQuantity);
 
                     return (
                       <TableRow key={idx}>
                         <TableCell className="font-medium text-xs">
                           <div>
-                            <span className="font-semibold text-foreground block">{itemName}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-foreground block">{itemName}</span>
+                              {isTool && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium">
+                                  Herramienta
+                                </span>
+                              )}
+                            </div>
                             {itemDescription && (
                               <span className="text-[11px] text-muted-foreground block">{itemDescription}</span>
                             )}
@@ -156,7 +172,19 @@ export default function ViewWorkDetailsDialog({
                           </div>
                         </TableCell>
                         <TableCell>
-                          {it.mode === 'pieces' ? (
+                          {isTool ? (
+                            lostQty > 0 ? (
+                              <Badge variant="destructive" className="text-xs">
+                                <Wrench className="h-3 w-3 mr-1" />
+                                Herramienta (Baja: {lostQty})
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">
+                                <Wrench className="h-3 w-3 mr-1" />
+                                Herramienta (Taller)
+                              </Badge>
+                            )
+                          ) : it.mode === 'pieces' ? (
                             <Badge variant="outline" className="text-xs">Piezas enteras</Badge>
                           ) : it.mode === 'measure' ? (
                             <Badge variant="secondary" className="text-xs">
@@ -168,7 +196,23 @@ export default function ViewWorkDetailsDialog({
                           )}
                         </TableCell>
                         <TableCell className="text-right text-xs font-semibold">
-                          {it.mode === 'pieces'
+                          {isTool ? (
+                            <div>
+                              <span>{parseDecimal(it.quantity)} en uso</span>
+                              {lostQty > 0 ? (
+                                <span className="text-[11px] text-destructive block font-normal">
+                                  {lostQty} baja ({it.lossReason === 'end_of_life' ? 'vida útil' : it.lossReason === 'damaged' ? 'daño' : 'pérdida'})
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground block font-normal">
+                                  Retorna íntegra
+                                </span>
+                              )}
+                              {it.note && (
+                                <span className="text-[10px] text-muted-foreground italic block font-normal">{it.note}</span>
+                              )}
+                            </div>
+                          ) : it.mode === 'pieces'
                             ? `${parseDecimal(it.piecesConsumed || it.quantity)} pz`
                             : it.mode === 'measure'
                             ? `${parseDecimal(it.measureUsed)} ${unitSymbol}`
@@ -176,7 +220,7 @@ export default function ViewWorkDetailsDialog({
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="text-right text-xs font-semibold">
-                            ${parseDecimal(it.subtotal).toFixed(2)}
+                            ${parseDecimal(isTool ? (it.toolLossCost ?? it.subtotal) : it.subtotal).toFixed(2)}
                           </TableCell>
                         )}
                       </TableRow>
@@ -208,7 +252,7 @@ export default function ViewWorkDetailsDialog({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {work.waste.map((ws, idx) => {
+                  {work.waste.map((ws: any, idx: number) => {
                     const wsDoc = typeof ws.item === 'object' && ws.item
                       ? ws.item
                       : inventoryItems.find((inv: any) => inv._id === ws.item);

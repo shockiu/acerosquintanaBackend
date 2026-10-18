@@ -16,12 +16,17 @@ export const workWasteItemSchema = z.object({
 
 export const workItemSchema = z.object({
   item: inventoryItemSchema.or(z.string()).optional().nullable(),
-  mode: z.enum(['pieces', 'measure', 'waste']).optional(),
+  kind: z.string().optional(),
+  mode: z.enum(['pieces', 'measure', 'waste', 'tool']).optional(),
   source: z.enum(['whole_piece', 'remnant']).optional(),
   remnant: z.string().optional(),
   measureUsed: z.coerce.number().optional(),
   piecesConsumed: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
+  lostQuantity: z.coerce.number().optional(),
+  lossReason: z.enum(['damaged', 'end_of_life', 'worn_out', 'lost']).optional(),
+  note: z.string().optional(),
+  toolLossCost: z.coerce.number().optional(),
   unitCostSnapshot: z.coerce.number().optional(), // Admin solo
   subtotal: z.coerce.number().optional(),
 });
@@ -37,6 +42,7 @@ export const workSchema = z.object({
   chargedPrice: z.coerce.number().optional(), // Admin solo
   materialsCost: z.coerce.number().optional(), // Admin solo
   wasteCost: z.coerce.number().optional(), // Admin solo
+  toolLossCost: z.coerce.number().optional(), // Admin solo
   totalCost: z.coerce.number().optional(), // Alias
   profit: z.coerce.number().optional(), // Admin solo
   hasPendingReversal: z.boolean().optional(),

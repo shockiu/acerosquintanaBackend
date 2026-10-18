@@ -7,18 +7,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCreateWork } from '../hooks/useWorksData';
 import { useInventoryItems } from '@/features/inventory/hooks/useInventoryData';
 import { inventoryApi } from '@/features/inventory/services/inventoryApi';
-import { Plus, Trash2, Scissors, Package, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Scissors, Package, AlertCircle, Wrench } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { toast } from 'sonner';
 import type { InventoryItem, Remnant } from '@/features/inventory/schemas/inventory.schema';
 
 interface WorkLineState {
   item: string;
-  mode?: 'pieces' | 'measure' | 'waste';
+  mode?: 'pieces' | 'measure' | 'waste' | 'tool';
   source?: 'whole_piece' | 'remnant';
   remnant?: string;
   quantity?: number;
   measureUsed?: number;
+  hasLoss?: boolean;
+  lostQuantity?: number;
+  lossReason?: 'damaged' | 'end_of_life';
   note?: string;
 }
 
@@ -64,7 +67,31 @@ export default function CreateWorkDialog({ open, onOpenChange }: { open: boolean
       }
 
       const invItem = inventoryItems?.find(it => it._id === line.item);
-      if (invItem?.pieceSpec) {
+      const isTool = invItem?.kind === 'tool' || line.mode === 'tool';
+
+      if (isTool) {
+        const qty = Number(line.quantity || 0);
+        if (qty <= 0) {
+          toast.error(`Indica cuántas unidades de la herramienta se usaron en la fila #${i + 1}`);
+          return;
+        }
+        const currentStock = Number(invItem?.stock || 0);
+        if (qty > currentStock) {
+          toast.error(`No hay suficiente stock de "${invItem?.name}" (disponibles: ${currentStock}, indicadas: ${qty})`);
+          return;
+        }
+        if (line.hasLoss) {
+          const lost = Number(line.lostQuantity || 0);
+          if (lost <= 0) {
+            toast.error(`Indica cuántas herramientas se dañaron o cumplieron su vida útil en la fila #${i + 1}`);
+            return;
+          }
+          if (lost > qty) {
+            toast.error(`Las herramientas dadas de baja (${lost}) no pueden superar a las usadas (${qty}) en la fila #${i + 1}`);
+            return;
+          }
+        }
+      } else if (invItem?.pieceSpec) {
         if (line.mode === 'pieces' && (!line.quantity || line.quantity <= 0)) {
           toast.error(`Indica la cantidad de piezas enteras en la fila #${i + 1}`);
           return;
@@ -97,34 +124,41 @@ export default function CreateWorkDialog({ open, onOpenChange }: { open: boolean
       performedAt: new Date(performedAt).toISOString(),
       items: selectedItems.map(l => {
         const inv = inventoryItems?.find(it => it._id === l.item);
-        const itemName = inv?.name;
-        const unitSymbol = (inv?.pieceSpec?.measureUnit as any)?.symbol || 'm';
+        const isTool = inv?.kind === 'tool' || l.mode === 'tool';
+        if (isTool) {
+          const lost = l.hasLoss ? Math.min(Number(l.lostQuantity || 0), Number(l.quantity || 1)) : 0;
+          return {
+            item: l.item,
+            mode: 'tool',
+            quantity: Number(l.quantity || 1),
+            lostQuantity: lost,
+            lossReason: lost > 0 ? (l.lossReason || 'damaged') : undefined,
+            note: l.note?.trim() || undefined,
+          };
+        }
         if (inv?.pieceSpec) {
           if (l.mode === 'pieces') {
-            return { item: l.item, itemName, mode: 'pieces', quantity: Number(l.quantity) };
+            return { item: l.item, mode: 'pieces', quantity: Number(l.quantity) };
           }
           if (l.mode === 'measure') {
             return {
               item: l.item,
-              itemName,
               mode: 'measure',
               source: l.source || 'whole_piece',
               remnant: l.source === 'remnant' ? l.remnant : undefined,
               measureUsed: Number(l.measureUsed),
-              unitSymbol,
             };
           }
           if (l.mode === 'waste') {
             return {
               item: l.item,
-              itemName,
               mode: 'waste',
               remnant: l.remnant,
-              note: l.note,
+              note: l.note?.trim() || undefined,
             };
           }
         }
-        return { item: l.item, itemName, quantity: Number(l.quantity) };
+        return { item: l.item, quantity: Number(l.quantity) };
       }),
     };
 
@@ -253,7 +287,20 @@ function WorkItemRow({
 
   const handleItemSelect = (itemId: string) => {
     const selected = allItems.find(it => it._id === itemId);
-    if (selected?.pieceSpec) {
+    if (selected?.kind === 'tool') {
+      onChange({
+        item: itemId,
+        mode: 'tool',
+        quantity: 1,
+        hasLoss: false,
+        lostQuantity: 0,
+        lossReason: 'damaged',
+        note: '',
+        source: undefined,
+        measureUsed: undefined,
+        remnant: undefined,
+      });
+    } else if (selected?.pieceSpec) {
       onChange({
         item: itemId,
         mode: 'pieces', // default mode for piece-tracked items
@@ -261,6 +308,9 @@ function WorkItemRow({
         source: 'whole_piece',
         measureUsed: undefined,
         remnant: undefined,
+        hasLoss: false,
+        lostQuantity: undefined,
+        lossReason: undefined,
       });
     } else {
       onChange({
@@ -270,6 +320,9 @@ function WorkItemRow({
         source: undefined,
         measureUsed: undefined,
         remnant: undefined,
+        hasLoss: false,
+        lostQuantity: undefined,
+        lossReason: undefined,
       });
     }
   };
@@ -342,8 +395,93 @@ function WorkItemRow({
         </Button>
       </div>
 
-      {/* Piece-tracked specific options */}
-      {hasPieceSpec ? (
+      {/* Tool specific options */}
+      {item?.kind === 'tool' || line.mode === 'tool' ? (
+        <div className="bg-background/80 p-2.5 rounded-md border space-y-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-primary" />
+              <Label className="text-xs font-semibold">Cantidad en uso:</Label>
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                required
+                className="w-24 h-8 text-xs bg-background"
+                value={line.quantity || 1}
+                onChange={e => onChange({ quantity: Number(e.target.value) })}
+              />
+              <span className="text-muted-foreground text-[11px]">
+                (Disponibles en taller: {Number(item?.stock || 0)})
+              </span>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+              <input
+                type="checkbox"
+                className="rounded text-primary h-3.5 w-3.5"
+                checked={!!line.hasLoss}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  onChange({
+                    hasLoss: checked,
+                    lostQuantity: checked ? 1 : 0,
+                    lossReason: checked ? (line.lossReason || 'damaged') : undefined,
+                  });
+                }}
+              />
+              ¿Se dañó o cumplió su vida útil?
+            </label>
+          </div>
+
+          {line.hasLoss ? (
+            <div className="p-2 rounded bg-destructive/10 border border-destructive/20 space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs text-destructive font-semibold">Cant. dada de baja:</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={line.quantity || 1}
+                    step="1"
+                    required
+                    className="w-20 h-7 text-xs bg-background"
+                    value={line.lostQuantity || 1}
+                    onChange={e => onChange({ lostQuantity: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs font-medium">Motivo:</Label>
+                  <select
+                    className="h-7 rounded border border-input bg-background px-2 text-xs"
+                    value={line.lossReason || 'damaged'}
+                    onChange={e => onChange({ lossReason: e.target.value as 'damaged' | 'end_of_life' })}
+                  >
+                    <option value="damaged">Dañada / rota en obra</option>
+                    <option value="end_of_life">Cumplió su vida útil</option>
+                  </select>
+                </div>
+              </div>
+
+              <Input
+                className="h-7 text-xs bg-background"
+                placeholder="Detalles del daño o motivo de baja (opcional)..."
+                value={line.note || ''}
+                onChange={e => onChange({ note: e.target.value })}
+              />
+
+              <p className="text-[11px] text-destructive">
+                ⚠️ Solo las <strong>{line.lostQuantity || 1}</strong> unidad(es) declaradas como baja se descontarán del stock al aprobar la obra.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              ℹ️ Esta herramienta se devolverá al taller al finalizar la obra (<strong>no reduce stock</strong>).
+            </p>
+          )}
+        </div>
+      ) : hasPieceSpec ? (
         <div className="bg-background/80 p-2.5 rounded-md border space-y-2 text-xs">
           {/* Mode Selector Tabs */}
           <div className="flex items-center gap-2">

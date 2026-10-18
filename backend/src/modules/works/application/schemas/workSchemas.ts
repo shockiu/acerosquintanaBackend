@@ -27,14 +27,33 @@ const wasteLine = z.object({
   note: z.string().optional(),
 });
 
+// Tool usage: tools are returned to the workshop by default. Only units declared
+// as lost (damaged / end of life) are written off from stock on approval.
+const toolLine = z.object({
+  item: z.string().min(1),
+  mode: z.literal('tool'),
+  quantity: z.number().int().positive(),
+  lostQuantity: z.number().int().min(0).default(0),
+  lossReason: z.enum(['damaged', 'end_of_life']).optional(),
+  note: z.string().optional(),
+}).refine(
+  (v) => v.lostQuantity <= v.quantity,
+  { message: 'lostQuantity cannot exceed quantity', path: ['lostQuantity'] }
+).refine(
+  (v) => v.lostQuantity === 0 || v.lossReason !== undefined,
+  { message: 'lossReason is required when lostQuantity > 0', path: ['lossReason'] }
+);
+
 // Legacy line: plain quantity in the item's own unit (items without pieceSpec).
-// Must stay last so it never swallows lines that carry a `mode`.
+// Must stay last. Display-only keys sent by the client are stripped, but a `mode`
+// key is rejected so it never swallows lines that failed a more specific branch.
 const legacyLine = z.object({
   item: z.string().min(1),
   quantity: z.number().positive(),
-}).strict();
+  mode: z.undefined().optional(),
+});
 
-export const workItemLineSchema = z.union([piecesLine, measureLine, wasteLine, legacyLine]);
+export const workItemLineSchema = z.union([piecesLine, measureLine, wasteLine, toolLine, legacyLine]);
 
 export const createWorkSchema = z.object({
   body: z.object({

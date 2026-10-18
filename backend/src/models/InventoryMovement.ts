@@ -9,11 +9,15 @@ export interface IInventoryMovement extends Document {
     | 'work_reversal'
     | 'cut'
     | 'remnant_consumption'
-    | 'waste';
+    | 'waste'
+    | 'tool_writeoff'
+    | 'sale'
+    | 'sale_reversal';
   quantity: Types.Decimal128;
   unitCost?: Types.Decimal128;
   totalCost?: Types.Decimal128;
   work?: Types.ObjectId;
+  sale?: Types.ObjectId;
   measureUsed?: Types.Decimal128;
   remnant?: Types.ObjectId;
   createdBy: Types.ObjectId;
@@ -36,6 +40,9 @@ const inventoryMovementSchema = new Schema<IInventoryMovement>(
         'cut',
         'remnant_consumption',
         'waste',
+        'tool_writeoff',
+        'sale',
+        'sale_reversal',
       ],
       required: true,
     },
@@ -43,6 +50,7 @@ const inventoryMovementSchema = new Schema<IInventoryMovement>(
     unitCost: { type: Schema.Types.Decimal128 },
     totalCost: { type: Schema.Types.Decimal128 },
     work: { type: Schema.Types.ObjectId, ref: 'Work' },
+    sale: { type: Schema.Types.ObjectId, ref: 'Sale' },
     measureUsed: { type: Schema.Types.Decimal128 },
     remnant: { type: Schema.Types.ObjectId, ref: 'Remnant' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

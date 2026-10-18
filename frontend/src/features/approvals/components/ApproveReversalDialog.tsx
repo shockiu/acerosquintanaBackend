@@ -2,8 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RotateCcw, Package, AlertTriangle, Scissors, Calendar, User, Wrench } from 'lucide-react';
 import { useApproveRequest } from '../hooks/useApprovalsData';
-import { RotateCcw, Package, AlertTriangle, Scissors, Calendar, User } from 'lucide-react';
 import type { ChangeRequest } from '../schemas/approvals.schema';
 
 function parseDecimal(val: any): number {
@@ -64,7 +64,7 @@ export default function ApproveReversalDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <RotateCcw className="h-5 w-5" />
@@ -165,18 +165,43 @@ export default function ApproveReversalDialog({
                       const piecesQty = parseDecimal(it.piecesConsumed || it.quantity);
                       const measureQty = parseDecimal(it.measureUsed);
 
+                      const isTool = it.mode === 'tool' || it.kind === 'tool';
+                      const lostQty = parseDecimal(it.lostQuantity);
+
                       return (
                         <TableRow key={idx} className="h-10 text-xs">
                           <TableCell className="font-medium py-2">
                             <div>
-                              <span className="font-semibold text-foreground block truncate">{itemName}</span>
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="font-semibold text-foreground truncate">{itemName}</span>
+                                {isTool && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium">
+                                    Herramienta
+                                  </span>
+                                )}
+                              </div>
                               {itemDesc && (
                                 <span className="text-[10px] text-muted-foreground block truncate">{itemDesc}</span>
+                              )}
+                              {isTool && it.note && (
+                                <span className="text-[10px] text-muted-foreground italic block truncate">Nota: {it.note}</span>
                               )}
                             </div>
                           </TableCell>
                           <TableCell className="py-2">
-                            {it.mode === 'pieces' ? (
+                            {isTool ? (
+                              lostQty > 0 ? (
+                                <Badge variant="destructive" className="text-[11px]">
+                                  <Wrench className="h-3 w-3 mr-1" />
+                                  Herramienta (Baja: {lostQty})
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-[11px]">
+                                  <Wrench className="h-3 w-3 mr-1" />
+                                  Herramienta (Reutilizada)
+                                </Badge>
+                              )
+                            ) : it.mode === 'pieces' ? (
                               <Badge variant="outline" className="text-[11px]">Piezas enteras</Badge>
                             ) : it.mode === 'measure' ? (
                               <Badge variant="secondary" className="text-[11px]">
@@ -187,12 +212,20 @@ export default function ApproveReversalDialog({
                               <Badge variant="outline" className="text-[11px]">Directo</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-right py-2 font-bold text-success text-xs">
-                            {it.mode === 'pieces'
-                              ? `+${piecesQty} pz`
-                              : it.mode === 'measure'
-                              ? `+${piecesQty || 1} pz (${measureQty > 0 ? `${measureQty} ` : ''}${unitSymbol})`
-                              : `+${piecesQty} unid.`}
+                          <TableCell className="text-right py-2 font-bold text-xs">
+                            {isTool ? (
+                              lostQty > 0 ? (
+                                <span className="text-success">+{lostQty} unid. (recupera stock)</span>
+                              ) : (
+                                <span className="text-muted-foreground font-normal">0 unid. (reutilizada)</span>
+                              )
+                            ) : it.mode === 'pieces' ? (
+                              <span className="text-success">+{piecesQty} pz</span>
+                            ) : it.mode === 'measure' ? (
+                              <span className="text-success">+{piecesQty || 1} pz ({measureQty > 0 ? `${measureQty} ` : ''}${unitSymbol})</span>
+                            ) : (
+                              <span className="text-success">+{piecesQty} unid.</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

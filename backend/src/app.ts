@@ -12,6 +12,7 @@ import { inventoryRoutes } from './modules/inventory/infrastructure/http/invento
 import { approvalRoutes } from './modules/approvals/infrastructure/http/approvalRoutes';
 import { workRoutes } from './modules/works/infrastructure/http/workRoutes';
 import { exportRoutes } from './modules/exports/infrastructure/http/exportRoutes';
+import { saleRoutes } from './modules/sales/infrastructure/http/saleRoutes';
 import { registerChangeHandlers } from './config/handlers';
 
 // Initialize change handlers
@@ -37,6 +38,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/requests', approvalRoutes);
 app.use('/api/works', workRoutes);
 app.use('/api/exports', exportRoutes);
+app.use('/api/sales', saleRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, status: 'Healthy' });

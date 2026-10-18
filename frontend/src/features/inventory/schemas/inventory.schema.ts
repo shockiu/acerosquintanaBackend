@@ -20,6 +20,7 @@ export const subcategorySchema = z.object({
   category: z.any(),
   unit: z.any(),
   kind: z.enum(['material', 'tool']).optional(),
+  imageUrl: z.string().nullable().optional(),
 });
 
 export const pieceSpecSchema = z.object({

@@ -294,4 +294,33 @@ describe('ReverseWorkHandler', () => {
     const updatedTool = await InventoryItem.findById(tool._id);
     expect(Number(updatedTool?.stock.toString())).toBe(4);
   });
+
+  it('reverses work restoring tools that were written off', async () => {
+    const tool = await InventoryItem.create({
+      name: 'Esmeril Reversal',
+      kind: 'tool',
+      subcategory: pipeItem.subcategory,
+      stock: 2, // was 3, one written off by the work
+      avgUnitCost: '100',
+    });
+
+    const work = await Work.create({
+      clientName: 'Cliente Reversal Tool Loss',
+      performedAt: new Date(),
+      status: 'approved',
+      createdBy: new mongoose.Types.ObjectId(),
+      items: [{ item: tool._id, kind: 'tool', mode: 'tool', quantity: 2, lostQuantity: 1, lossReason: 'damaged' }],
+    });
+
+    const request: any = {
+      targetId: work._id.toString(),
+      requestedBy: new mongoose.Types.ObjectId().toString(),
+    };
+    const ctx: any = { actorId: new mongoose.Types.ObjectId().toString(), role: 'admin' };
+
+    await handler.apply(request, {}, ctx, undefined);
+
+    const updatedTool = await InventoryItem.findById(tool._id);
+    expect(Number(updatedTool?.stock.toString())).toBe(3);
+  });
 });

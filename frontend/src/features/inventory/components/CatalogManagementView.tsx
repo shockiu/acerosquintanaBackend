@@ -130,9 +130,21 @@ export default function CatalogManagementView() {
 
                         return (
                           <TableRow key={sub._id} className="hover:bg-muted/20">
-                            <TableCell className="font-medium text-sm flex items-center gap-2">
-                              <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                              {sub.name}
+                            <TableCell className="font-medium text-sm">
+                              <div className="flex items-center gap-2.5">
+                                {sub.imageUrl ? (
+                                  <img
+                                    src={sub.imageUrl}
+                                    alt={sub.name}
+                                    className="w-8 h-8 rounded object-cover border border-border shadow-xs bg-muted shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded border border-dashed border-border flex items-center justify-center bg-muted/40 shrink-0">
+                                    <Layers className="h-4 w-4 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <span>{sub.name}</span>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Badge variant={sub.kind === 'tool' ? 'secondary' : 'default'} className="text-xs">

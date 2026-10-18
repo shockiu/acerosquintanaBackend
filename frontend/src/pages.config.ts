@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BarChart3, Package, ClipboardCheck, ShieldAlert, Users } from 'lucide-react';
+import { BarChart3, Package, ClipboardCheck, ShieldAlert, Users, Receipt } from 'lucide-react';
 
 export const MAIN_PAGES = [
   {
@@ -21,6 +21,13 @@ export const MAIN_PAGES = [
     name: 'Obras',
     icon: ClipboardCheck,
     component: lazy(() => import('@/features/works/WorksPage')),
+    showInSidebar: true,
+  },
+  {
+    path: '/sales',
+    name: 'Ventas',
+    icon: Receipt,
+    component: lazy(() => import('@/features/sales/SalesPage')),
     showInSidebar: true,
   },
   {

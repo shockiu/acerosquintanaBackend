@@ -3,8 +3,8 @@ import { paginationMetaSchema } from '@/types/pagination';
 
 export const changeRequestSchema = z.object({
   _id: z.string(),
-  entity: z.enum(['inventoryItem', 'inventoryMovement', 'work', 'remnant', 'category', 'subcategory']),
-  action: z.enum(['create', 'update', 'delete', 'purchase', 'discard']),
+  entity: z.enum(['inventoryItem', 'inventoryMovement', 'work', 'remnant', 'category', 'subcategory', 'sale']),
+  action: z.enum(['create', 'update', 'delete', 'purchase', 'discard', 'cancel']),
 
   targetId: z.string().optional().nullable(),
   targetName: z.string().optional().nullable(),

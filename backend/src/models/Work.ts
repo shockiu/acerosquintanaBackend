@@ -4,7 +4,7 @@ export interface IWorkItem {
   item: Types.ObjectId;
   kind: 'material' | 'tool';
   // Only meaningful for items with pieceSpec. Absent => legacy quantity line.
-  mode?: 'pieces' | 'measure' | 'waste';
+  mode?: 'pieces' | 'measure' | 'waste' | 'tool';
   source?: 'whole_piece' | 'remnant';
   remnant?: Types.ObjectId;
   measureUsed?: Types.Decimal128;
@@ -14,6 +14,10 @@ export interface IWorkItem {
   quantity?: Types.Decimal128;
   unitCostSnapshot?: Types.Decimal128;
   subtotal?: Types.Decimal128;
+  // Tool lines only: units written off (damaged / end of life). Absent/0 => returned.
+  lostQuantity?: Types.Decimal128;
+  lossReason?: 'damaged' | 'end_of_life';
+  note?: string;
 }
 
 export interface IWorkWaste {
@@ -38,6 +42,7 @@ export interface IWork extends Document {
   materialsCost?: Types.Decimal128;
   waste: IWorkWaste[];
   wasteCost?: Types.Decimal128;
+  toolLossCost?: Types.Decimal128;
   profit?: Types.Decimal128;
   createdBy: Types.ObjectId;
   approvedBy?: Types.ObjectId;
@@ -49,7 +54,7 @@ const workItemSchema = new Schema<IWorkItem>(
   {
     item: { type: Schema.Types.ObjectId, ref: 'InventoryItem', required: true },
     kind: { type: String, enum: ['material', 'tool'], required: true },
-    mode: { type: String, enum: ['pieces', 'measure', 'waste'] },
+    mode: { type: String, enum: ['pieces', 'measure', 'waste', 'tool'] },
     source: { type: String, enum: ['whole_piece', 'remnant'] },
     remnant: { type: Schema.Types.ObjectId, ref: 'Remnant' },
     measureUsed: { type: Schema.Types.Decimal128 },
@@ -58,6 +63,9 @@ const workItemSchema = new Schema<IWorkItem>(
     quantity: { type: Schema.Types.Decimal128 },
     unitCostSnapshot: { type: Schema.Types.Decimal128 },
     subtotal: { type: Schema.Types.Decimal128 },
+    lostQuantity: { type: Schema.Types.Decimal128 },
+    lossReason: { type: String, enum: ['damaged', 'end_of_life'] },
+    note: { type: String },
   },
   { _id: false }
 );
@@ -92,6 +100,7 @@ const workSchema = new Schema<IWork>(
     materialsCost: { type: Schema.Types.Decimal128 },
     waste: { type: [workWasteSchema], default: [] },
     wasteCost: { type: Schema.Types.Decimal128 },
+    toolLossCost: { type: Schema.Types.Decimal128 },
     profit: { type: Schema.Types.Decimal128 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },

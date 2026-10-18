@@ -100,6 +100,25 @@ export class ReverseWorkHandler implements IChangeHandler {
           note: `Reversión de obra: restauración de retazo original a disponible`,
         }], { session: tx });
 
+      } else if (item.kind === 'tool') {
+        // Tools: only written-off units ever left stock
+        const lost = new Decimal(item.lostQuantity?.toString() || '0');
+        if (lost.gt(0)) {
+          const currentStock = new Decimal(itemDoc.stock.toString());
+          itemDoc.stock = currentStock.add(lost).toString() as any;
+          await itemDoc.save({ session: tx });
+
+          await InventoryMovement.create([{
+            item: itemDoc._id,
+            type: 'work_reversal',
+            quantity: lost.toString(),
+            work: work._id,
+            createdBy: request.requestedBy,
+            approvedBy: ctx.actorId,
+            note: `Reversión de obra: reincorporación de ${lost.toString()} herramienta(s) dada(s) de baja`,
+          }], { session: tx });
+        }
+
       } else if (item.kind === 'material') {
         // Legacy material
         const qty = new Decimal(item.quantity?.toString() || '0');

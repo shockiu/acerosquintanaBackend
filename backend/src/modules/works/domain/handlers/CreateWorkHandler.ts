@@ -9,6 +9,7 @@ import { changeHandlerRegistry } from '../../../approvals/domain/ChangeHandlerRe
 import {
   PieceConsumptionService,
   WASTE_CHARGED_TO_PROFIT,
+  TOOL_LOSS_CHARGED_TO_PROFIT,
 } from '../../../inventory/domain/PieceConsumptionService';
 
 export class CreateWorkHandler implements IChangeHandler {
@@ -45,6 +46,7 @@ export class CreateWorkHandler implements IChangeHandler {
 
     let totalMaterialsCost = new Decimal(0);
     let totalWasteCost = new Decimal(0);
+    let totalToolLossCost = new Decimal(0);
     const workItems: any[] = [];
     const workWaste: any[] = [];
 
@@ -53,6 +55,60 @@ export class CreateWorkHandler implements IChangeHandler {
       for (const line of payload.items) {
         const itemDoc = await InventoryItem.findById(line.item).session(tx);
         if (!itemDoc) throw new Error(`Ítem ${line.item} no encontrado`);
+
+        // --- CASE T: TOOL (reusable; only declared losses leave stock) ---
+        if (itemDoc.kind === 'tool') {
+          const usedQty = new Decimal(line.quantity ?? 0);
+          const lostQty = new Decimal(line.mode === 'tool' ? (line.lostQuantity ?? 0) : 0);
+          const currentStock = new Decimal(itemDoc.stock.toString());
+
+          if (usedQty.lte(0)) {
+            throw new Error(`Cantidad inválida para la herramienta "${itemDoc.name}"`);
+          }
+          if (usedQty.gt(currentStock)) {
+            throw new Error(
+              `Stock insuficiente de la herramienta "${itemDoc.name}": se declararon ${usedQty.toString()} y hay ${currentStock.toString()}`
+            );
+          }
+          if (lostQty.gt(usedQty)) {
+            throw new Error(`Las unidades perdidas de "${itemDoc.name}" no pueden superar las usadas`);
+          }
+
+          const unitCost = new Decimal(itemDoc.avgUnitCost?.toString() || '0');
+          const lossCost = lostQty.mul(unitCost);
+
+          if (lostQty.gt(0)) {
+            itemDoc.stock = currentStock.sub(lostQty).toString() as any;
+            await itemDoc.save({ session: tx });
+            totalToolLossCost = totalToolLossCost.add(lossCost);
+
+            const reasonLabel = line.lossReason === 'end_of_life' ? 'fin de vida útil' : 'dañada';
+            await InventoryMovement.create([{
+              item: itemDoc._id,
+              type: 'tool_writeoff',
+              quantity: lostQty.negated().toString(),
+              unitCost: unitCost.toString(),
+              totalCost: lossCost.toString(),
+              work: work._id,
+              createdBy: request.requestedBy,
+              approvedBy: ctx.actorId,
+              note: `Baja de ${lostQty.toString()} herramienta(s) por ${reasonLabel}${line.note ? `: ${line.note}` : ''}`,
+            }], { session: tx });
+          }
+
+          workItems.push({
+            item: itemDoc._id,
+            kind: 'tool',
+            mode: 'tool',
+            quantity: usedQty.toString(),
+            lostQuantity: lostQty.toString(),
+            lossReason: lostQty.gt(0) ? (line.lossReason || 'damaged') : undefined,
+            note: line.note,
+            unitCostSnapshot: unitCost.toString(),
+            subtotal: lossCost.toString(),
+          });
+          continue;
+        }
 
         // Check if item has piece tracking
         if (itemDoc.pieceSpec && line.mode) {
@@ -282,42 +338,32 @@ export class CreateWorkHandler implements IChangeHandler {
           }
 
         } else {
-          // --- CASE B: LEGACY ITEM (NO PIECE SPEC) OR TOOL ---
+          // --- CASE B: LEGACY MATERIAL (NO PIECE SPEC) ---
           const quantity = line.quantity !== undefined ? line.quantity : line.measureUsed;
           const res = PieceConsumptionService.consumeLegacy(itemDoc as any, quantity);
 
-          if (itemDoc.kind === 'material') {
-            const currentStock = new Decimal(itemDoc.stock.toString());
-            itemDoc.stock = currentStock.sub(res.piecesDeducted).toString() as any;
-            await itemDoc.save({ session: tx });
+          const currentStock = new Decimal(itemDoc.stock.toString());
+          itemDoc.stock = currentStock.sub(res.piecesDeducted).toString() as any;
+          await itemDoc.save({ session: tx });
 
-            totalMaterialsCost = totalMaterialsCost.add(res.subtotal);
+          totalMaterialsCost = totalMaterialsCost.add(res.subtotal);
 
-            workItems.push({
-              item: itemDoc._id,
-              kind: itemDoc.kind,
-              quantity: res.piecesDeducted.toString(),
-              unitCostSnapshot: res.unitCostSnapshot.toString(),
-              subtotal: res.subtotal.toString(),
-            });
+          workItems.push({
+            item: itemDoc._id,
+            kind: itemDoc.kind,
+            quantity: res.piecesDeducted.toString(),
+            unitCostSnapshot: res.unitCostSnapshot.toString(),
+            subtotal: res.subtotal.toString(),
+          });
 
-            await InventoryMovement.create([{
-              item: itemDoc._id,
-              type: 'work_consumption',
-              quantity: res.piecesDeducted.negated().toString(),
-              work: work._id,
-              createdBy: request.requestedBy,
-              approvedBy: ctx.actorId,
-            }], { session: tx });
-
-          } else {
-            // Tool
-            workItems.push({
-              item: itemDoc._id,
-              kind: itemDoc.kind,
-              quantity: new Decimal(quantity).toString(),
-            });
-          }
+          await InventoryMovement.create([{
+            item: itemDoc._id,
+            type: 'work_consumption',
+            quantity: res.piecesDeducted.negated().toString(),
+            work: work._id,
+            createdBy: request.requestedBy,
+            approvedBy: ctx.actorId,
+          }], { session: tx });
         }
       }
     }
@@ -326,12 +372,14 @@ export class CreateWorkHandler implements IChangeHandler {
     work.materialsCost = totalMaterialsCost.toString() as any;
     work.waste = workWaste as any;
     work.wasteCost = totalWasteCost.toString() as any;
+    work.toolLossCost = totalToolLossCost.toString() as any;
 
     if (finalChargedPrice !== undefined) {
-      // Option 1: profit = chargedPrice - materialsCost - wasteCost
+      // profit = chargedPrice - materialsCost - wasteCost - toolLossCost (each per its flag)
       const profit = new Decimal(finalChargedPrice)
         .sub(totalMaterialsCost)
-        .sub(WASTE_CHARGED_TO_PROFIT ? totalWasteCost : new Decimal(0));
+        .sub(WASTE_CHARGED_TO_PROFIT ? totalWasteCost : new Decimal(0))
+        .sub(TOOL_LOSS_CHARGED_TO_PROFIT ? totalToolLossCost : new Decimal(0));
       work.profit = profit.toString() as any;
     }
 

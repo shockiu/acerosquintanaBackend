@@ -130,7 +130,16 @@ export default function InventoryPage() {
                         return (
                           <TableRow key={p._id}>
                             <TableCell className="text-xs text-muted-foreground">
-                              {typeof p.subcategory === 'object' && p.subcategory ? p.subcategory.name : '-'}
+                              <div className="flex items-center gap-2">
+                                {typeof p.subcategory === 'object' && p.subcategory?.imageUrl ? (
+                                  <img
+                                    src={p.subcategory.imageUrl}
+                                    alt={p.subcategory.name}
+                                    className="w-7 h-7 rounded object-cover border border-border shadow-xs bg-muted shrink-0"
+                                  />
+                                ) : null}
+                                <span>{typeof p.subcategory === 'object' && p.subcategory ? p.subcategory.name : '-'}</span>
+                              </div>
                             </TableCell>
                             <TableCell className="font-medium">
                               <div>
